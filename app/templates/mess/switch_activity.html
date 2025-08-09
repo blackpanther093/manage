@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}Student Activity - ManageIt{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+         <!-- Header  -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Student Activity</h1>
+                <p class="text-gray-600 dark:text-gray-400 mt-2">Students joining or leaving {% if mess_name == 'mess1' %}Mess Food Sutra{% else %}Mess Food Sutra{% endif %}</p>
+            </div>
+            <a href="/mess/dashboard" class="btn-primary text-white px-4 py-2 rounded-lg font-medium text-center">
+                <i class="ph ph-house mr-2"></i>
+                Dashboard
+            </a>
+        </div>
+
+         <!-- Search Bar  -->
+        <div class="mb-8">
+            <div class="relative max-w-md">
+                <i class="ph ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500"></i>
+                <input type="text" id="searchInput" placeholder="Search student ID..." 
+                       class="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                       onkeyup="filterTables()">
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+             <!-- Students Joining  -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 sm:p-8">
+                <div class="flex items-center mb-6">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
+                        <i class="ph ph-user-plus text-green-600 dark:text-green-400 text-lg sm:text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">Students Joining</h3>
+                        <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">New students requesting to join</p>
+                    </div>
+                </div>
+
+                {% if joined_students and joined_students[0]['count'] > 0 %}
+                <div class="space-y-4">
+                    <div class="text-center mb-4">
+                        <span class="text-2xl sm:text-3xl font-bold text-green-600 dark:text-green-400">{{ joined_students[0]['count'] }}</span>
+                        <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Total Requests</p>
+                    </div>
+                    <div id="joinedTable" class="max-h-64 overflow-y-auto">
+                        {% for student_id in joined_students[0]['s_id'] %}
+                        <div class="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg mb-2">
+                            <span class="font-medium text-gray-900 dark:text-white text-sm">{{ student_id }}</span>
+                            <span class="text-xs sm:text-sm text-green-600 dark:text-green-400 font-medium">Joining</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-8">
+                    <i class="ph ph-user-plus text-3xl sm:text-4xl text-gray-300 dark:text-gray-600 mb-3"></i>
+                    <p class="text-gray-500 dark:text-gray-400">No students requesting to join</p>
+                </div>
+                {% endif %}
+            </div>
+
+             <!-- Students Leaving  -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 sm:p-8">
+                <div class="flex items-center mb-6">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
+                        <i class="ph ph-user-minus text-red-600 dark:text-red-400 text-lg sm:text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">Students Leaving</h3>
+                        <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Students requesting to leave</p>
+                    </div>
+                </div>
+
+                {% if left_students and left_students[0]['count'] > 0 %}
+                <div class="space-y-4">
+                    <div class="text-center mb-4">
+                        <span class="text-2xl sm:text-3xl font-bold text-red-600 dark:text-red-400">{{ left_students[0]['count'] }}</span>
+                        <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Total Requests</p>
+                    </div>
+                    <div id="leftTable" class="max-h-64 overflow-y-auto">
+                        {% for student_id in left_students[0]['s_id'] %}
+                        <div class="flex items-center justify-between p-3 bg-red-50 dark:bg-red-900/20 rounded-lg mb-2">
+                            <span class="font-medium text-gray-900 dark:text-white text-sm">{{ student_id }}</span>
+                            <span class="text-xs sm:text-sm text-red-600 dark:text-red-400 font-medium">Leaving</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-8">
+                    <i class="ph ph-user-minus text-3xl sm:text-4xl text-gray-300 dark:text-gray-600 mb-3"></i>
+                    <p class="text-gray-500 dark:text-gray-400">No students requesting to leave</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+         <!-- Summary  -->
+        <div class="mt-8 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 sm:p-8">
+            <h3 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-6">Activity Summary</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div class="text-center">
+                    <div class="w-12 h-12 sm:w-16 sm:h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <i class="ph ph-trend-up text-green-600 dark:text-green-400 text-xl sm:text-2xl"></i>
+                    </div>
+                    <p class="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400">
+                        +{{ joined_students[0]['count'] if joined_students and joined_students[0]['count'] > 0 else 0 }}
+                    </p>
+                    <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">New Joinings</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-12 h-12 sm:w-16 sm:h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <i class="ph ph-trend-down text-red-600 dark:text-red-400 text-xl sm:text-2xl"></i>
+                    </div>
+                    <p class="text-xl sm:text-2xl font-bold text-red-600 dark:text-red-400">
+                        -{{ left_students[0]['count'] if left_students and left_students[0]['count'] > 0 else 0 }}
+                    </p>
+                    <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Departures</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <i class="ph ph-equals text-blue-600 dark:text-blue-400 text-xl sm:text-2xl"></i>
+                    </div>
+                    <p class="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400">
+                        {{ (joined_students[0]['count'] if joined_students and joined_students[0]['count'] > 0 else 0) - (left_students[0]['count'] if left_students and left_students[0]['count'] > 0 else 0) }}
+                    </p>
+                    <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Net Change</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function filterTables() {
+    const input = document.getElementById('searchInput').value.toLowerCase();
+    const joinedRows = document.querySelectorAll("#joinedTable > div");
+    const leftRows = document.querySelectorAll("#leftTable > div");
+
+    joinedRows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(input) ? '' : 'none';
+    });
+
+    leftRows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(input) ? '' : 'none';
+    });
+}
+</script>
+{% endblock %}

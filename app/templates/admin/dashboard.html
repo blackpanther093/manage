@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - ManageIt{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <!-- Header -->
+    <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-gradient-to-r from-red-500 to-red-600 rounded-xl flex items-center justify-center">
+                            <i class="ph ph-shield-check text-white text-xl"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-bold text-gray-900 dark:text-white">ManageIt</h1>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Admin Portal</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="p-2 text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-200">
+                        <i class="ph ph-house text-xl"></i>
+                    </a>
+                    <a href="/auth/profile" class="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 transition-colors">
+                        <div class="w-8 h-8 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+                            <i class="ph ph-user text-red-600 dark:text-red-400"></i>
+                        </div>
+                        <span class="font-medium hidden sm:block">{{ session['admin_name'] }}</span>
+                    </a>
+                    <a href="/auth/logout" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                        <i class="ph ph-sign-out mr-1"></i>
+                        <span class="hidden sm:inline">Logout</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Welcome Section -->
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Admin Dashboard</h2>
+            <p class="text-gray-600 dark:text-gray-400">Manage the entire mess management system</p>
+        </div>
+
+        <!-- Mess Switch Toggle -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-8 mb-8 card-hover">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between">
+                <div class="mb-4 sm:mb-0">
+                    <div class="flex items-center mb-2">
+                        <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center mr-4">
+                            <i class="ph ph-toggle-{{ 'right' if mess_switch_enabled else 'left' }} text-blue-600 dark:text-blue-400 text-xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Mess Switch Feature</h3>
+                    </div>
+                    <p class="text-gray-600 dark:text-gray-400 ml-16">
+                        {% if mess_switch_enabled %}
+                            Feature is currently <span class="text-green-600 dark:text-green-400 font-semibold">ENABLED</span>
+                            {% if enabled_time %}
+                                since {{ enabled_time }}
+                            {% endif %}
+                        {% else %}
+                            Feature is currently <span class="text-red-600 dark:text-red-400 font-semibold">DISABLED</span>
+                        {% endif %}
+                    </p>
+                </div>
+                <form method="POST" action="/admin/toggle-mess-switch">
+                    <button type="submit" class="
+                        {% if mess_switch_enabled %}
+                            bg-red-500 hover:bg-red-600
+                        {% else %}
+                            bg-green-500 hover:bg-green-600
+                        {% endif %}
+                        text-white px-6 py-3 rounded-xl font-medium transition-colors">
+                        {% if mess_switch_enabled %}
+                            <i class="ph ph-toggle-right mr-2"></i>
+                            Turn OFF
+                        {% else %}
+                            <i class="ph ph-toggle-left mr-2"></i>
+                            Turn ON
+                        {% endif %}
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Action Cards -->
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Select Mess -->
+            <a href="/admin/select-mess" class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 card-hover group">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                        <i class="ph ph-buildings text-blue-600 dark:text-blue-400 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Select Mess</h3>
+                </div>
+                <p class="text-gray-600 dark:text-gray-400 mb-4">Choose a mess to manage its operations</p>
+                <div class="flex items-center text-blue-600 dark:text-blue-400 text-sm font-medium">
+                    <span>Manage Mess</span>
+                    <i class="ph ph-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                </div>
+            </a>
+
+            <!-- Send Notifications -->
+            <a href="/admin/send-notification" class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 card-hover group">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                        <i class="ph ph-bell text-yellow-600 dark:text-yellow-400 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Send Notifications</h3>
+                </div>
+                <p class="text-gray-600 dark:text-gray-400 mb-4">Send announcements to users</p>
+                <div class="flex items-center text-yellow-600 dark:text-yellow-400 text-sm font-medium">
+                    <span>Send Message</span>
+                    <i class="ph ph-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                </div>
+            </a>
+
+            <!-- Update Veg Menu -->
+            <a href="/admin/update-veg-menu" class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 card-hover group">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                        <i class="ph ph-leaf text-green-600 dark:text-green-400 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Update Veg Menu</h3>
+                </div>
+                <p class="text-gray-600 dark:text-gray-400 mb-4">Modify vegetarian menu items</p>
+                <div class="flex items-center text-green-600 dark:text-green-400 text-sm font-medium">
+                    <span>Update Menu</span>
+                    <i class="ph ph-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                </div>
+            </a>
+
+            <!-- Feedback Summary -->
+            <a href="/admin/feedback-summary" class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 card-hover group">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                        <i class="ph ph-chart-bar text-purple-600 dark:text-purple-400 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Feedback Summary</h3>
+                </div>
+                <p class="text-gray-600 dark:text-gray-400 mb-4">View student feedback analytics</p>
+                <div class="flex items-center text-purple-600 dark:text-purple-400 text-sm font-medium">
+                    <span>View Analytics</span>
+                    <i class="ph ph-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                </div>
+            </a>
+
+            <!-- Waste Summary -->
+            <a href="/admin/waste-summary" class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 card-hover group">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                        <i class="ph ph-trash text-red-600 dark:text-red-400 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Waste Summary</h3>
+                </div>
+                <p class="text-gray-600 dark:text-gray-400 mb-4">Monitor food waste statistics</p>
+                <div class="flex items-center text-red-600 dark:text-red-400 text-sm font-medium">
+                    <span>View Reports</span>
+                    <i class="ph ph-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                </div>
+            </a>
+
+            <!-- Payment Summary -->
+            <a href="/admin/payment-summary" class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 card-hover group">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                        <i class="ph ph-currency-inr text-orange-600 dark:text-orange-400 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Payment Summary</h3>
+                </div>
+                <p class="text-gray-600 dark:text-gray-400 mb-4">View payment reports and revenue</p>
+                <div class="flex items-center text-orange-600 dark:text-orange-400 text-sm font-medium">
+                    <span>View Revenue</span>
+                    <i class="ph ph-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

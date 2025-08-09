@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}Home - ManageIt{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
+    <!-- Navigation Header -->
+    <nav class="glass-effect sticky top-0 z-40 border-b border-gray-200/50 dark:border-gray-700/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                            <i class="ph ph-buildings text-white text-xl"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-bold text-gray-900 dark:text-white">ManageIt</h1>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Mess Management</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/public-notifications" class="p-2 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200">
+                        <i class="ph ph-bell text-xl"></i>
+                    </a>
+                    <a href="/auth/login" class="btn-primary text-white px-4 py-2 sm:px-6 sm:py-2.5 rounded-xl font-medium text-sm">
+                        <i class="ph ph-sign-in mr-2"></i>
+                        Login
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+        {% if meal %}
+            <!-- Hero Section -->
+            <div class="text-center mb-12 lg:mb-16">
+                <div class="inline-flex items-center px-4 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium mb-4">
+                    <i class="ph ph-clock mr-2"></i>
+                    Now Serving
+                </div>
+                <h2 class="text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-4">
+                    Today's {{ meal }}
+                </h2>
+                <p class="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+                    Fresh meals prepared with care and quality ingredients
+                </p>
+            </div>
+
+            <!-- Ratings Section -->
+            <div class="grid md:grid-cols-2 gap-8 mb-12 lg:mb-16">
+                <!-- Mess Food Sutra -->
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-8 card-hover">
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <i class="ph ph-buildings text-white text-2xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Mess Food Sutra</h3>
+                        <p class="text-gray-600 dark:text-gray-400 mb-6">Ground & First Floor</p>
+                        
+                        <!-- Rating Display -->
+                        <div class="mb-4">
+                            <div class="flex items-center justify-center mb-2">
+                                <span class="text-3xl font-bold text-gray-900 dark:text-white mr-2">{{ current_avg_rating_mess1 }}</span>
+                                <span class="text-lg text-gray-500 dark:text-gray-400">/5</span>
+                            </div>
+                            <div class="rating-stars justify-center mb-2">
+                                {% for i in range(5) %}
+                                    <i class="ph-fill ph-star rating-star {{ 'empty' if i >= current_avg_rating_mess1|int else '' }}"></i>
+                                {% endfor %}
+                            </div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">{{ mess1_count }} reviews</p>
+                        </div>
+                        
+                        <!-- Progress Bar -->
+                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                            <div class="progress-bar" style="width: {{ (current_avg_rating_mess1 / 5 * 100) }}%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mess Sakthi -->
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-8 card-hover">
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-gradient-to-r from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <i class="ph ph-buildings text-white text-2xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Mess Sakthi</h3>
+                        <p class="text-gray-600 dark:text-gray-400 mb-6">Second & Third Floor</p>
+                        
+                        <!-- Rating Display -->
+                        <div class="mb-4">
+                            <div class="flex items-center justify-center mb-2">
+                                <span class="text-3xl font-bold text-gray-900 dark:text-white mr-2">{{ current_avg_rating_mess2 }}</span>
+                                <span class="text-lg text-gray-500 dark:text-gray-400">/5</span>
+                            </div>
+                            <div class="rating-stars justify-center mb-2">
+                                {% for i in range(5) %}
+                                    <i class="ph-fill ph-star rating-star {{ 'empty' if i >= current_avg_rating_mess2|int else '' }}"></i>
+                                {% endfor %}
+                            </div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">{{ mess2_count }} reviews</p>
+                        </div>
+                        
+                        <!-- Progress Bar -->
+                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                            <div class="progress-bar bg-gradient-to-r from-purple-500 to-purple-600" style="width: {{ (current_avg_rating_mess2 / 5 * 100) }}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Menu Sections -->
+            <div class="grid lg:grid-cols-3 gap-8">
+                <!-- Vegetarian Menu -->
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-8 card-hover">
+                    <div class="flex items-center mb-6">
+                        <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center mr-4">
+                            <i class="ph ph-leaf text-green-600 dark:text-green-400 text-xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">Vegetarian Menu</h3>
+                    </div>
+                    {% if veg_menu_items %}
+                        <ul class="space-y-3">
+                            {% for item in veg_menu_items %}
+                                <li class="flex items-center text-gray-700 dark:text-gray-300">
+                                    <i class="ph ph-check-circle text-green-500 mr-3 text-sm"></i>
+                                    <span>{{ item }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <div class="text-center py-8">
+                            <i class="ph ph-leaf text-4xl text-gray-300 dark:text-gray-600 mb-3"></i>
+                            <p class="text-gray-500 dark:text-gray-400">No vegetarian items available</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Mess Food Sutra Special -->
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-8 card-hover">
+                    <div class="flex items-center mb-6">
+                        <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center mr-4">
+                            <i class="ph ph-cooking-pot text-blue-600 dark:text-blue-400 text-xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">Mess Food Sutra Special</h3>
+                    </div>
+                    {% if non_veg_menu1 %}
+                        <ul class="space-y-4">
+                            {% for item, cost in non_veg_menu1 %}
+                                <li class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                                    <span class="text-gray-700 dark:text-gray-300">{{ item }}</span>
+                                    <span class="text-lg font-bold text-blue-600 dark:text-blue-400">₹{{ cost }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <div class="text-center py-8">
+                            <i class="ph ph-cooking-pot text-4xl text-gray-300 dark:text-gray-600 mb-3"></i>
+                            <p class="text-gray-500 dark:text-gray-400">No special items available</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Mess Sakthi Special -->
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-8 card-hover">
+                    <div class="flex items-center mb-6">
+                        <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center mr-4">
+                            <i class="ph ph-cooking-pot text-purple-600 dark:text-purple-400 text-xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">Mess Sakthi Special</h3>
+                    </div>
+                    {% if non_veg_menu2 %}
+                        <ul class="space-y-4">
+                            {% for item, cost in non_veg_menu2 %}
+                                <li class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                                    <span class="text-gray-700 dark:text-gray-300">{{ item }}</span>
+                                    <span class="text-lg font-bold text-purple-600 dark:text-purple-400">₹{{ cost }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <div class="text-center py-8">
+                            <i class="ph ph-cooking-pot text-4xl text-gray-300 dark:text-gray-600 mb-3"></i>
+                            <p class="text-gray-500 dark:text-gray-400">No special items available</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% else %}
+            <!-- No Meal Available -->
+            <div class="text-center py-20">
+                <div class="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="ph ph-clock text-4xl text-gray-400 dark:text-gray-500"></i>
+                </div>
+                <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">No Meal Available</h2>
+                <p class="text-xl text-gray-600 dark:text-gray-400 mb-8">Please check back during meal times</p>
+                <div class="inline-flex items-center px-4 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded-full text-sm">
+                    <i class="ph ph-info mr-2"></i>
+                    Meal times: 8-10 AM, 12-2 PM, 4-6 PM, 8-10 PM
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="text-center">
+                <div class="flex items-center justify-center space-x-3 mb-4">
+                    <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                        <i class="ph ph-buildings text-white"></i>
+                    </div>
+                    <span class="text-lg font-semibold text-gray-900 dark:text-white">ManageIt</span>
+                </div>
+                <p class="text-gray-600 dark:text-gray-400">&copy; 2025 ManageIt - Mess Management System. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+</div>
+{% endblock %}

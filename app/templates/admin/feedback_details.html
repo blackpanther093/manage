@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Feedback Details - ManageIt{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+         <!-- Header  -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Feedback Details</h1>
+                <p class="text-gray-600 dark:text-gray-400 mt-2">{{ feedback_date }} - {{ meal }}</p>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <a href="/admin/feedback-summary" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors text-center">
+                    <i class="ph ph-arrow-left mr-2"></i>
+                    Back to Summary
+                </a>
+                <a href="/admin/dashboard" class="btn-primary text-white px-4 py-2 rounded-lg font-medium text-center">
+                    <i class="ph ph-house mr-2"></i>
+                    Dashboard
+                </a>
+            </div>
+        </div>
+
+        {% if feedback_data %}
+         <!-- Feedback Table  -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div class="px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Student Feedback for {{ meal }} on {{ feedback_date }}</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 dark:bg-gray-700/50">
+                        <tr>
+                            <th class="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">Student ID</th>
+                            <th class="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">Average Rating</th>
+                            <th class="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                        {% for feedback in feedback_data %}
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                            <td class="px-4 sm:px-6 py-4 text-xs sm:text-sm font-medium text-gray-900 dark:text-white">{{ feedback[0] }}</td>
+                            <td class="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 dark:text-white">
+                                <div class="flex items-center">
+                                    <span class="text-yellow-500 mr-1">★</span>
+                                    <span class="font-semibold">{{ "%.2f"|format(feedback[1]) }}</span>
+                                </div>
+                            </td>
+                            <td class="px-4 sm:px-6 py-4 text-xs sm:text-sm">
+                                <a href="/admin/student-feedback/{{ feedback[0] }}/{{ feedback_date }}/{{ meal }}" 
+                                   class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium transition-colors">
+                                    View Full Feedback
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+         <!-- No Data  -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 sm:p-12 text-center">
+            <i class="ph ph-chart-bar text-4xl sm:text-6xl text-gray-300 dark:text-gray-600 mb-4"></i>
+            <h3 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-2">No Feedback Data</h3>
+            <p class="text-gray-600 dark:text-gray-400">No feedback data available for this date and meal.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Send Notification - ManageIt{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+         <!-- Header  -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Send Notification</h1>
+                <p class="text-gray-600 dark:text-gray-400 mt-2">Send announcements to users</p>
+            </div>
+            <a href="/admin/dashboard" class="btn-primary text-white px-4 py-2 rounded-lg font-medium text-center">
+                <i class="ph ph-house mr-2"></i>
+                Dashboard
+            </a>
+        </div>
+
+         <!-- Notification Form  -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 sm:p-8">
+            <form method="POST" class="space-y-6">
+                <div>
+                    <label for="recipient_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Send To *</label>
+                    <div class="relative">
+                        <i class="ph ph-users absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500"></i>
+                        <select name="recipient_type" id="recipient_type" required
+                                class="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                            <option value="" disabled selected>Select Recipients</option>
+                            <option value="student">Students Only</option>
+                            <option value="mess_official">Mess Officials Only</option>
+                            <option value="both">All Users</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="message" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Message *</label>
+                    <div class="relative">
+                        <i class="ph ph-chat-text absolute left-3 top-3 text-gray-400 dark:text-gray-500"></i>
+                        <textarea name="message" id="message" rows="6" required
+                                  class="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+                                  placeholder="Enter your notification message..."></textarea>
+                    </div>
+                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Maximum 500 characters</p>
+                </div>
+
+                <div class="pt-4">
+                    <button type="submit" class="w-full btn-primary text-white py-3 px-4 rounded-lg font-medium text-base sm:text-lg">
+                        <i class="ph ph-paper-plane mr-2"></i>
+                        Send Notification
+                    </button>
+                </div>
+            </form>
+        </div>
+
+         <!-- Preview Section  -->
+        <div class="mt-8 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 sm:p-8">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Preview</h3>
+            <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <div class="flex items-start">
+                    <i class="ph ph-info text-blue-600 dark:text-blue-400 text-xl mr-3 mt-0.5"></i>
+                    <div>
+                        <p class="text-blue-800 dark:text-blue-200 font-medium">Notification Preview</p>
+                        <p class="text-blue-700 dark:text-blue-300 mt-1" id="messagePreview">Your message will appear here...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('message').addEventListener('input', function() {
+    const message = this.value;
+    const preview = document.getElementById('messagePreview');
+    preview.textContent = message || 'Your message will appear here...';
+});
+</script>
+{% endblock %}

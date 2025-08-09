@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Payment History - ManageIt{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Payment History</h1>
+                <p class="text-gray-600 dark:text-gray-400 mt-2">Your transaction history for the last 30 days</p>
+            </div>
+            <a href="/student/dashboard" class="mt-4 sm:mt-0 btn-primary text-white px-6 py-2 rounded-xl font-medium inline-flex items-center">
+                <i class="ph ph-house mr-2"></i>
+                Dashboard
+            </a>
+        </div>
+
+        {% if data %}
+        <!-- Payment Table -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden card-hover">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 dark:bg-gray-700/50">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Date</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Mess</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Meal</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Food Item</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                        {% for mess, date, meal, food_item, amount in data %}
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                            <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">{{ date }}</td>
+                            <td class="px-6 py-4 text-sm">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                    {% if mess == 'mess1' %}bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200{% else %}bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200{% endif %}">
+                                    <i class="ph ph-buildings mr-1"></i>
+                                    {{ 'Food Sutra' if mess == 'mess1' else 'Sakthi' }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-sm">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                    {% if meal == 'Breakfast' %}bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200
+                                    {% elif meal == 'Lunch' %}bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200
+                                    {% elif meal == 'Snacks' %}bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200
+                                    {% else %}bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200{% endif %}">
+                                    {{ meal }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">{{ food_item }}</td>
+                            <td class="px-6 py-4 text-sm font-semibold text-green-600 dark:text-green-400">₹{{ amount }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Summary -->
+        <div class="mt-8 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 card-hover">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Summary</h3>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                        <i class="ph ph-receipt text-blue-600 dark:text-blue-400 text-2xl"></i>
+                    </div>
+                    <p class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ data|length }}</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Total Transactions</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                        <i class="ph ph-currency-inr text-green-600 dark:text-green-400 text-2xl"></i>
+                    </div>
+                    <p class="text-2xl font-bold text-green-600 dark:text-green-400">₹{{ data|sum(attribute=4) }}</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Total Amount</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-orange-100 dark:bg-orange-900/30 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                        <i class="ph ph-chart-bar text-orange-600 dark:text-orange-400 text-2xl"></i>
+                    </div>
+                    <p class="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                        ₹{{ "%.2f"|format(data|sum(attribute=4) / data|length) if data else 0 }}
+                    </p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Average per Transaction</p>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <!-- No Data -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-12 text-center card-hover">
+            <div class="w-24 h-24 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="ph ph-receipt text-4xl text-gray-400 dark:text-gray-500"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">No Payment History</h3>
+            <p class="text-gray-600 dark:text-gray-400 mb-6">You haven't made any payments in the last 30 days.</p>
+            <!-- <a href="/student/dashboard" class="btn-primary text-white px-6 py-2 rounded-xl font-medium inline-flex items-center">
+                <i class="ph ph-arrow-left mr-2"></i>
+                Back to Dashboard
+            </a> -->
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

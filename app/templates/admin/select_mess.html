@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Select Mess - ManageIt{% endblock %}
+
+{% block content %}
+<div class="min-h-screen gradient-bg flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+        <!-- Header -->
+        <div class="text-center">
+            <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Select Mess</h2>
+            <p class="text-gray-700 dark:text-gray-300">Choose which mess to manage</p>
+        </div>
+
+        <!-- Selection Form -->
+        <div class="glass-effect rounded-2xl p-8 border border-gray-200 dark:border-gray-700 shadow-lg">
+            <form method="POST" class="space-y-6">
+                <div class="space-y-4">
+                    <label class="block">
+                        <input type="radio" name="selected_mess" value="mess1" class="sr-only peer" required>
+                        <div class="p-6 border-2 border-gray-200 dark:border-gray-700 rounded-xl cursor-pointer peer-checked:border-yellow-400 peer-checked:bg-white/10 hover:bg-gray-50 dark:hover:bg-white/5 transition-all bg-white dark:bg-transparent">
+                            <div class="flex items-center">
+                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                                    <i class="ph ph-buildings text-blue-600 text-xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Mess Food Sutra</h3>
+                                    <p class="text-gray-500 dark:text-gray-300 text-sm">Ground & First Floor</p>
+                                </div>
+                            </div>
+                        </div>
+                    </label>
+
+                    <label class="block">
+                        <input type="radio" name="selected_mess" value="mess2" class="sr-only peer" required>
+                        <div class="p-6 border-2 border-gray-200 dark:border-gray-700 rounded-xl cursor-pointer peer-checked:border-yellow-400 peer-checked:bg-white/10 hover:bg-gray-50 dark:hover:bg-white/5 transition-all bg-white dark:bg-transparent">
+                            <div class="flex items-center">
+                                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
+                                    <i class="ph ph-buildings text-purple-600 text-xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Mess Sakthi</h3>
+                                    <p class="text-gray-500 dark:text-gray-300 text-sm">Second & Third Floor</p>
+                                </div>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="flex space-x-4">
+                    <a href="/admin/dashboard" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-3 px-4 rounded-lg font-medium text-center border border-gray-200 dark:border-gray-700 flex items-center justify-center transition-colors">
+                        Cancel
+                    </a>
+                    <button type="submit" class="flex-1 btn-primary text-white py-3 px-4 rounded-lg font-medium border border-gray-200 dark:border-gray-700 flex items-center justify-center">
+                        Select Mess
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

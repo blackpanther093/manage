@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - ManageIt{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">User Profile</h1>
+            <p class="text-gray-600 dark:text-gray-400">Manage your account information</p>
+        </div>
+
+        <!-- Profile Card -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-8 mb-8 animate-slide-up">
+            <div class="flex flex-col sm:flex-row items-center sm:items-start mb-8">
+                <div class="w-24 h-24 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mb-4 sm:mb-0 sm:mr-6">
+                    <i class="ph ph-user text-3xl text-white"></i>
+                </div>
+                <div class="text-center sm:text-left">
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+                        {{ user_data.get('name', user_data.get('username', 'User')) }}
+                    </h2>
+                    <p class="text-lg text-gray-600 dark:text-gray-400 mb-2">{{ role.title().replace('_', ' ') }}</p>
+                    <div class="inline-flex items-center px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium">
+                        <i class="ph ph-check-circle mr-2"></i>
+                        Active Account
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
+                    <label class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">User ID</label>
+                    <p class="text-lg font-semibold text-gray-900 dark:text-white">
+                        {{ user_data.get('s_id', user_data.get('mess_id', user_data.get('admin_id', 'N/A'))) }}
+                    </p>
+                </div>
+
+                {% if user_data.get('mess') %}
+                <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
+                    <label class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Assigned Mess</label>
+                    <p class="text-lg font-semibold text-gray-900 dark:text-white">
+                        {% if user_data.get('mess') == 'mess1' %}
+                            <i class="ph ph-buildings mr-2 text-blue-500"></i>Mess Food Sutra
+                        {% elif user_data.get('mess') == 'mess2' %}
+                            <i class="ph ph-buildings mr-2 text-purple-500"></i>Mess Sakthi
+                        {% else %}
+                            {{ user_data.get('mess', 'N/A') }}
+                        {% endif %}
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="grid md:grid-cols-2 gap-6 mb-8">
+            <a href="/auth/update-password" class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 card-hover group">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                        <i class="ph ph-lock text-orange-600 dark:text-orange-400 text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Change Password</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Update your account security</p>
+                    </div>
+                </div>
+                <div class="flex items-center text-orange-600 dark:text-orange-400 text-sm font-medium">
+                    <span>Update Password</span>
+                    <i class="ph ph-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                </div>
+            </a>
+
+            {% if role == 'student' and mess_switch_enabled %}
+            <form method="POST" action="/student/switch-mess" class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 card-hover group">
+                <button type="submit" class="w-full text-left">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                            <i class="ph ph-swap text-green-600 dark:text-green-400 text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Switch Mess</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Request to change your mess</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center text-green-600 dark:text-green-400 text-sm font-medium">
+                        <span>Request Switch</span>
+                        <i class="ph ph-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </button>
+            </form>
+            {% endif %}
+        </div>
+
+        <!-- Dashboard Link -->
+        <div class="text-center">
+            {% if role == 'student' %}
+                <a href="/student/dashboard" class="btn-primary text-white px-8 py-3 rounded-xl font-medium inline-flex items-center text-lg">
+                    <i class="ph ph-house mr-2"></i>
+                    Go to Dashboard
+                </a>
+            {% elif role == 'mess_official' %}
+                <a href="/mess/dashboard" class="btn-primary text-white px-8 py-3 rounded-xl font-medium inline-flex items-center text-lg">
+                    <i class="ph ph-house mr-2"></i>
+                    Go to Dashboard
+                </a>
+            {% elif role == 'admin' %}
+                <a href="/admin/dashboard" class="btn-primary text-white px-8 py-3 rounded-xl font-medium inline-flex items-center text-lg">
+                    <i class="ph ph-house mr-2"></i>
+                    Go to Dashboard
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Update Veg Menu - ManageIt{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+         <!-- Header  -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Update Vegetarian Menu</h1>
+                <p class="text-gray-600 dark:text-gray-400 mt-2">{{ week_type }} Week • {{ day }} • {{ meal }}</p>
+            </div>
+            <a href="/admin/dashboard" class="btn-primary text-white px-4 py-2 rounded-lg font-medium text-center">
+                <i class="ph ph-house mr-2"></i>
+                Dashboard
+            </a>
+        </div>
+
+         <!-- Menu Update Form  -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 sm:p-8 mb-8">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Menu Items</h3>
+                <form method="POST" action="/admin/restore-default-veg-menu" class="inline">
+                    <button type="submit" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                        <i class="ph ph-arrow-counter-clockwise mr-2"></i>
+                        Restore Default
+                    </button>
+                </form>
+            </div>
+
+            <form method="POST" id="menuForm">
+                <div id="itemsContainer">
+                    <div class="item-row mb-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="flex-1">
+                                <input type="text" name="food_item[]" required
+                                       class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                       placeholder="Enter food item name">
+                            </div>
+                            <button type="button" onclick="removeItem(this)" class="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg transition-colors">
+                                <i class="ph ph-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row items-center justify-between mb-6 gap-4">
+                    <button type="button" onclick="addItem()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                        <i class="ph ph-plus mr-2"></i>
+                        Add Item
+                    </button>
+                </div>
+
+                <div class="text-center">
+                    <button type="submit" class="btn-primary text-white px-6 sm:px-8 py-3 rounded-lg font-medium text-base sm:text-lg">
+                        <i class="ph ph-floppy-disk mr-2"></i>
+                        Update Menu
+                    </button>
+                </div>
+            </form>
+        </div>
+
+         <!-- Instructions  -->
+        <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6">
+            <div class="flex items-start">
+                <i class="ph ph-info text-blue-600 dark:text-blue-400 text-xl mr-3 mt-0.5"></i>
+                <div>
+                    <h4 class="text-blue-900 dark:text-blue-200 font-semibold mb-2">Instructions</h4>
+                    <ul class="text-blue-800 dark:text-blue-300 space-y-1 text-sm">
+                        <li>• This will temporarily override the default menu for today's {{ meal }}</li>
+                        <li>• Changes will be automatically reverted tomorrow</li>
+                        <li>• Use "Restore Default" to revert to the original menu immediately</li>
+                        <li>• Add multiple items by clicking "Add Item"</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function addItem() {
+    const container = document.getElementById('itemsContainer');
+    const newItem = document.createElement('div');
+    newItem.className = 'item-row mb-4';
+    newItem.innerHTML = `
+        <div class="flex items-center space-x-3">
+            <div class="flex-1">
+                <input type="text" name="food_item[]" required
+                       class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                       placeholder="Enter food item name">
+            </div>
+            <button type="button" onclick="removeItem(this)" class="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg transition-colors">
+                <i class="ph ph-trash"></i>
+            </button>
+        </div>
+    `;
+    container.appendChild(newItem);
+}
+
+function removeItem(button) {
+    const container = document.getElementById('itemsContainer');
+    const items = container.querySelectorAll('.item-row');
+    if (items.length > 1) {
+        button.closest('.item-row').remove();
+    }
+}
+</script>
+{% endblock %}

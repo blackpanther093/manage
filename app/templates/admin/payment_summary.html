@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Payment Summary - ManageIt{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+         <!-- Header  -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Payment Summary</h1>
+                <p class="text-gray-600 dark:text-gray-400 mt-2">Payment reports for {% if mess_name == 'mess1' %}Mess Food Sutra{% else %}Mess Sakthi{% endif %} - Last 30 days</p>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <a href="/admin/select-mess" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium transition-colors text-center">
+                    <i class="ph ph-buildings mr-2"></i>
+                    Change Mess
+                </a>
+                <a href="/admin/dashboard" class="btn-primary text-white px-4 py-2 rounded-lg font-medium text-center">
+                    <i class="ph ph-house mr-2"></i>
+                    Dashboard
+                </a>
+            </div>
+        </div>
+
+        {% if summary_data %}
+         <!-- Summary Cards  -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
+                        <i class="ph ph-receipt text-blue-600 dark:text-blue-400 text-lg sm:text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Total Transactions</p>
+                        <p class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{{ summary_data|length }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
+                        <i class="ph ph-currency-inr text-green-600 dark:text-green-400 text-lg sm:text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Total Revenue</p>
+                        <p class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">₹{{ summary_data|sum(attribute=3) }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
+                        <i class="ph ph-chart-bar text-purple-600 dark:text-purple-400 text-lg sm:text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Average per Day</p>
+                        <p class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+                            ₹{{ "%.0f"|format(summary_data|sum(attribute=3) / summary_data|length) if summary_data else 0 }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+         <!-- Payment Table  -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div class="px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Payment Details</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 dark:bg-gray-700/50">
+                        <tr>
+                            <th class="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">Date</th>
+                            <th class="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">Meal</th>
+                            <th class="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">Food Items</th>
+                            <th class="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">Total Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                        {% for date, food_items, meal, total_amount in summary_data %}
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                            <td class="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 dark:text-white">{{ date }}</td>
+                            <td class="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 dark:text-white">
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+                                    {% if meal == 'Breakfast' %}bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200
+                                    {% elif meal == 'Lunch' %}bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200
+                                    {% elif meal == 'Snacks' %}bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200
+                                    {% else %}bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200{% endif %}">
+                                    {{ meal }}
+                                </span>
+                            </td>
+                            <td class="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 dark:text-white">{{ food_items }}</td>
+                            <td class="px-4 sm:px-6 py-4 text-xs sm:text-sm font-semibold text-green-600 dark:text-green-400">₹{{ total_amount }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+         <!-- No Data  -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 sm:p-12 text-center">
+            <i class="ph ph-receipt text-4xl sm:text-6xl text-gray-300 dark:text-gray-600 mb-4"></i>
+            <h3 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-2">No Payment Data</h3>
+            <p class="text-gray-600 dark:text-gray-400 mb-6">No payments have been recorded for this mess in the last 30 days. Please select a mess first.</p>
+            <a href="/admin/select-mess" class="btn-primary text-white px-4 py-2 rounded-lg font-medium">
+                <i class="ph ph-buildings mr-2"></i>
+                Select Mess
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

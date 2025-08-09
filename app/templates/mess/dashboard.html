@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Mess Dashboard - ManageIt{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+     <!-- Header  -->
+    <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <h1 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">ManageIt</h1>
+                    <!-- <span class="ml-2 text-xs sm:text-sm text-gray-500 dark:text-gray-400">Mess Portal</span> -->
+                </div>
+                <div class="flex items-center space-x-2 sm:space-x-4">
+                    <a href="/" class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                        <i class="ph ph-house text-lg sm:text-xl"></i>
+                    </a>
+                    <a href="/mess/notifications" class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                        <i class="ph ph-bell text-lg sm:text-xl"></i>
+                    </a>
+                    <a href="/auth/profile" class="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                        <div class="w-6 h-6 sm:w-8 sm:h-8 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center">
+                            <i class="ph ph-user text-indigo-600 dark:text-indigo-400 text-sm sm:text-base"></i>
+                        </div>
+                        <span class="font-medium hidden sm:block">{{ username }}</span>
+                    </a>
+                    <a href="/auth/logout" class="bg-red-500 hover:bg-red-600 text-white px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors text-sm">
+                        <i class="ph ph-sign-out mr-1"></i>
+                        <span class="hidden sm:inline">Logout</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+         <!-- Welcome Section  -->
+        <div class="mb-6 sm:mb-8">
+            <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                Welcome, {% if mess_name == 'mess1' %}Mess Food Sutra{% else %}Mess Sakthi{% endif %}!
+            </h2>
+            <p class="text-gray-600 dark:text-gray-400">Manage your mess operations efficiently</p>
+        </div>
+
+         <!-- Action Cards  -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+             <!-- Add Non-Veg Menu  -->
+            <a href="/mess/add-non-veg-menu" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 card-hover group">
+                <div class="flex items-center mb-4">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4 group-hover:bg-orange-200 dark:group-hover:bg-orange-900/50 transition-colors">
+                        <i class="ph ph-plus text-orange-600 dark:text-orange-400 text-lg sm:text-xl"></i>
+                    </div>
+                    <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Add Non-Veg Menu</h3>
+                </div>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Add special meal options and set prices</p>
+            </a>
+
+             <!-- Add Payment Details  -->
+            <a href="/mess/add-payment" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 card-hover group">
+                <div class="flex items-center mb-4">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4 group-hover:bg-green-200 dark:group-hover:bg-green-900/50 transition-colors">
+                        <i class="ph ph-currency-inr text-green-600 dark:text-green-400 text-lg sm:text-xl"></i>
+                    </div>
+                    <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Add Payment Details</h3>
+                </div>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Record student payment transactions</p>
+            </a>
+
+             <!-- Waste Feedback  -->
+            <a href="/mess/waste-feedback" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 card-hover group">
+                <div class="flex items-center mb-4">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4 group-hover:bg-red-200 dark:group-hover:bg-red-900/50 transition-colors">
+                        <i class="ph ph-trash text-red-600 dark:text-red-400 text-lg sm:text-xl"></i>
+                    </div>
+                    <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Waste Feedback</h3>
+                </div>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Report daily food waste data</p>
+            </a>
+
+             <!-- Student Activity  -->
+            <a href="/mess/switch-activity" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 card-hover group">
+                <div class="flex items-center mb-4">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4 group-hover:bg-blue-200 dark:group-hover:bg-blue-900/50 transition-colors">
+                        <i class="ph ph-users text-blue-600 dark:text-blue-400 text-lg sm:text-xl"></i>
+                    </div>
+                    <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Student Activity</h3>
+                </div>
+                <p class="text-sm text-gray-600 dark:text-gray-400">View students joining or leaving</p>
+            </a>
+
+             <!-- Payment Summary  -->
+            <a href="/mess/payment-summary" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 card-hover group">
+                <div class="flex items-center mb-4">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4 group-hover:bg-purple-200 dark:group-hover:bg-purple-900/50 transition-colors">
+                        <i class="ph ph-chart-bar text-purple-600 dark:text-purple-400 text-lg sm:text-xl"></i>
+                    </div>
+                    <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Payment Summary</h3>
+                </div>
+                <p class="text-sm text-gray-600 dark:text-gray-400">View payment reports and analytics</p>
+            </a>
+
+             <!-- Waste Analytics  -->
+            <a href="/mess/review-waste-feedback" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 card-hover group">
+                <div class="flex items-center mb-4">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4 group-hover:bg-yellow-200 dark:group-hover:bg-yellow-900/50 transition-colors">
+                        <i class="ph ph-chart-line text-yellow-600 dark:text-yellow-400 text-lg sm:text-xl"></i>
+                    </div>
+                    <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Waste Analytics</h3>
+                </div>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Monitor waste patterns and trends</p>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

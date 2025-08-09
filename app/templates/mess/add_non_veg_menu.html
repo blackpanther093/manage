@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Add Non-Veg Menu - ManageIt{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+         <!-- Header  -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Add Non-Veg Menu</h1>
+                <p class="text-gray-600 dark:text-gray-400 mt-2">Add special items for {{ meal }} - {% if mess == 'mess1' %}Mess Food Sutra{% else %}Mess Sakthi{% endif %}</p>
+            </div>
+            <a href="/mess/dashboard" class="btn-primary text-white px-4 py-2 rounded-lg font-medium text-center">
+                <i class="ph ph-house mr-2"></i>
+                Dashboard
+            </a>
+        </div>
+
+         <!-- Add Items Form  -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 sm:p-8 mb-8">
+            <h3 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-6">Add New Items</h3>
+            <form method="POST" id="menuForm">
+                <div id="itemsContainer">
+                    <div class="item-row grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Food Item *</label>
+                            <input type="text" name="food_item[]" required
+                                   class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                   placeholder="Enter food item name">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Cost (₹) *</label>
+                            <input type="number" name="cost[]" required min="1" step="0.01"
+                                   class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                   placeholder="Enter cost">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row items-center justify-between mb-6 gap-4">
+                    <button type="button" onclick="addItem()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                        <i class="ph ph-plus mr-2"></i>
+                        Add Another Item
+                    </button>
+                    <button type="button" onclick="removeItem()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                        <i class="ph ph-minus mr-2"></i>
+                        Remove Last Item
+                    </button>
+                </div>
+
+                <div class="text-center">
+                    <button type="submit" class="btn-primary text-white px-6 sm:px-8 py-3 rounded-lg font-medium text-base sm:text-lg">
+                        <i class="ph ph-plus mr-2"></i>
+                        Add Items to Menu
+                    </button>
+                </div>
+            </form>
+        </div>
+
+         <!-- Current Items  -->
+        {% if previous_items %}
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 sm:p-8">
+            <h3 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-6">Today's Menu Items</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 dark:bg-gray-700/50">
+                        <tr>
+                            <th class="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">Food Item</th>
+                            <th class="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">Cost</th>
+                            <th class="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                        {% for item_id, food_item, cost in previous_items %}
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                            <td class="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 dark:text-white">{{ food_item }}</td>
+                            <td class="px-4 sm:px-6 py-4 text-xs sm:text-sm font-semibold text-green-600 dark:text-green-400">₹{{ cost }}</td>
+                            <td class="px-4 sm:px-6 py-4">
+                                <form method="POST" action="/mess/delete-item" class="inline">
+                                    <input type="hidden" name="item_id" value="{{ item_id }}">
+                                    <button type="submit" onclick="return confirm('Are you sure you want to delete this item?')"
+                                            class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs sm:text-sm font-medium transition-colors">
+                                        <i class="ph ph-trash mr-1"></i>
+                                        Delete
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function addItem() {
+    const container = document.getElementById('itemsContainer');
+    const newItem = document.createElement('div');
+    newItem.className = 'item-row grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg';
+    newItem.innerHTML = `
+        <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Food Item *</label>
+            <input type="text" name="food_item[]" required
+                   class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                   placeholder="Enter food item name">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Cost (₹) *</label>
+            <input type="number" name="cost[]" required min="1" step="0.01"
+                   class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                   placeholder="Enter cost">
+        </div>
+    `;
+    container.appendChild(newItem);
+}
+
+function removeItem() {
+    const container = document.getElementById('itemsContainer');
+    const items = container.querySelectorAll('.item-row');
+    if (items.length > 1) {
+        container.removeChild(items[items.length - 1]);
+    }
+}
+</script>
+{% endblock %}

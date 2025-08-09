@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications - ManageIt{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4 sm:gap-0">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Notifications</h1>
+                <p class="text-gray-600 dark:text-gray-400 mt-2">Recent announcements and updates</p>
+            </div>
+            <!-- Add z-20 and relative to ensure back button is above toggle, and mt-2 on mobile for spacing -->
+            <a href="{{ back_url }}" class="btn-primary text-white px-4 py-2 sm:px-6 sm:py-2 rounded-lg font-medium relative z-20 mt-2 sm:mt-0">
+                <i class="ph ph-arrow-left mr-2"></i>
+                Back
+            </a>
+        </div>
+
+        {% if notifications %}
+        <!-- Notifications List -->
+        <div class="space-y-4">
+            {% for message, created_at in notifications %}
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border p-6 card-hover">
+                <div class="flex items-start">
+                    <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
+                        <i class="ph ph-bell text-blue-600 dark:text-blue-400"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-gray-900 dark:text-white mb-2">{{ message }}</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">
+                            <i class="ph ph-clock mr-1"></i>
+                            {{ created_at.strftime('%B %d, %Y at %I:%M %p') if created_at else 'Recently' }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <!-- No Notifications -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border p-12 text-center">
+            <i class="ph ph-bell-slash text-6xl text-gray-300 dark:text-gray-600 mb-4"></i>
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">No Notifications</h3>
+            <p class="text-gray-600 dark:text-gray-400">You're all caught up! No new notifications at the moment.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

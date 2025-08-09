@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Review Waste Feedback - ManageIt{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+         <!-- Header  -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Review Waste Feedback</h1>
+                <p class="text-gray-600 dark:text-gray-400 mt-2">Insights and analytics for {{ today }} - {% if session['mess'] == 'mess1' %}Mess Food Sutra{% else %}Mess Sakthi{% endif %}</p>
+            </div>
+            <a href="/mess/dashboard" class="btn-primary text-white px-4 py-2 rounded-lg font-medium text-center">
+                <i class="ph ph-house mr-2"></i>
+                Dashboard
+            </a>
+        </div>
+
+        {% if no_data %}
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 sm:p-12 text-center">
+            <i class="ph ph-info text-4xl sm:text-6xl text-gray-300 dark:text-gray-600 mb-4"></i>
+            <h3 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-2">No Waste or Feedback Data</h3>
+            <p class="text-gray-600 dark:text-gray-400">No records found for the past 30 days.</p>
+        </div>
+        {% else %}
+
+         <!-- Top 5 Most Wasted Items  -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 sm:p-8 mb-8">
+            <h2 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-4">Top 5 Most Wasted Food Items</h2>
+            <ul class="space-y-3">
+                {% for item in top_5_wasted_food %}
+                <li class="flex justify-between items-center border border-gray-200 dark:border-gray-700 p-3 sm:p-4 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+                    <span class="font-medium text-gray-900 dark:text-white text-sm sm:text-base">{{ item[0] }}</span>
+                    <span class="text-green-600 dark:text-green-400 font-semibold text-sm sm:text-base">{{ item[1] }} kg</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+         <!-- Predicted Worst Foods  -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 sm:p-8 mb-8">
+            <h2 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-4">Top 3 Predicted Worst Foods</h2>
+            {% if predicted_worst_food is string %}
+            <p class="text-gray-600 dark:text-gray-400">{{ predicted_worst_food }}</p>
+            {% else %}
+            <ul class="space-y-3">
+                {% for item in predicted_worst_food %}
+                <li class="flex justify-between items-center border border-gray-200 dark:border-gray-700 p-3 sm:p-4 rounded-lg bg-red-50 dark:bg-red-900/20">
+                    <span class="font-medium text-gray-900 dark:text-white text-sm sm:text-base">{{ item[0] | title }} ({{ item[1] | title }})</span>
+                    <span class="text-red-600 dark:text-red-400 font-semibold text-sm sm:text-base">Score: {{ item[2] | round(1) }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+
+         <!-- Floor-wise Waste Chart  -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 sm:p-8 mb-8">
+            <h2 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-4">Floor-wise Waste Distribution</h2>
+            <div class="overflow-x-auto">
+                <div>{{ floor_pie_plot | safe }}</div>
+            </div>
+        </div>
+
+         <!-- Mess1 vs Mess2 Comparison  -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 sm:p-8 mb-8">
+            <h2 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-4">Total Waste Comparison (Mess1 vs Mess2)</h2>
+            <div class="overflow-x-auto">
+                <div>{{ mess_waste_plot | safe }}</div>
+            </div>
+        </div>
+
+         <!-- Feedback Trend Line Chart  -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 sm:p-8 mb-8">
+            <h2 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-4">Average Feedback Ratings by Day</h2>
+            <div class="overflow-x-auto">
+                <div>{{ plots | safe }}</div>
+            </div>
+        </div>
+
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

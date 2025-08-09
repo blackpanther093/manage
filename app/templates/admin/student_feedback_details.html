@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Student Feedback Details - ManageIt{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+         <!-- Header  -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Student Feedback Details</h1>
+                <p class="text-gray-600 dark:text-gray-400 mt-2">Student {{ s_id }} - {{ feedback_date }} - {{ meal }}</p>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <a href="/admin/feedback-details/{{ feedback_date }}/{{ meal }}" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors text-center">
+                    <i class="ph ph-arrow-left mr-2"></i>
+                    Back to Details
+                </a>
+                <a href="/admin/dashboard" class="btn-primary text-white px-4 py-2 rounded-lg font-medium text-center">
+                    <i class="ph ph-house mr-2"></i>
+                    Dashboard
+                </a>
+            </div>
+        </div>
+
+        {% if feedback_details %}
+         <!-- Student Info Card  -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 mb-8">
+            <div class="flex items-center">
+                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mr-3 sm:mr-4">
+                    <i class="ph ph-user text-blue-600 dark:text-blue-400 text-lg sm:text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Student ID: {{ s_id }}</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Feedback submitted for {{ meal }} on {{ feedback_date }}</p>
+                </div>
+            </div>
+        </div>
+
+         <!-- Feedback Details Table  -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div class="px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Detailed Feedback</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 dark:bg-gray-700/50">
+                        <tr>
+                            <th class="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">Food Item</th>
+                            <th class="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">Rating</th>
+                            <th class="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">Comments</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                        {% for feedback in feedback_details %}
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                            <td class="px-4 sm:px-6 py-4 text-xs sm:text-sm font-medium text-gray-900 dark:text-white">{{ feedback[0] }}</td>
+                            <td class="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 dark:text-white">
+                                <div class="flex items-center">
+                                    <div class="flex mr-2">
+                                        {% for i in range(5) %}
+                                            <i class="ph-fill ph-star text-xs {{ 'text-yellow-500' if i < feedback[1] else 'text-gray-300 dark:text-gray-600' }}"></i>
+                                        {% endfor %}
+                                    </div>
+                                    <span class="font-semibold">{{ feedback[1] }}/5</span>
+                                </div>
+                            </td>
+                            <td class="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 dark:text-white">
+                                {% if feedback[2] %}
+                                    <div class="max-w-xs">
+                                        <p class="text-gray-700 dark:text-gray-300">{{ feedback[2] }}</p>
+                                    </div>
+                                {% else %}
+                                    <span class="text-gray-400 dark:text-gray-500 italic">No comments</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+         <!-- No Data  -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 sm:p-12 text-center">
+            <i class="ph ph-user-x text-4xl sm:text-6xl text-gray-300 dark:text-gray-600 mb-4"></i>
+            <h3 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-2">No Feedback Data</h3>
+            <p class="text-gray-600 dark:text-gray-400">No feedback data available for this student.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

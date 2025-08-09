@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Waste Feedback - ManageIt{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+         <!-- Header  -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Waste Feedback</h1>
+                <p class="text-gray-600 dark:text-gray-400 mt-2">Report food waste data for {{ meal }} - {% if mess == 'mess1' %}Mess Food Sutra{% else %}Mess Sakthi{% endif %}</p>
+            </div>
+            <a href="/mess/dashboard" class="btn-primary text-white px-4 py-2 rounded-lg font-medium text-center">
+                <i class="ph ph-house mr-2"></i>
+                Dashboard
+            </a>
+        </div>
+
+         <!-- Waste Form  -->
+        <form method="POST" class="space-y-6 sm:space-y-8">
+             Floor Selection 
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 sm:p-8">
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-6">Floor Information</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select Floor *</label>
+                        <select name="floor" required
+                                class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                            <option value="" disabled selected>Choose Floor</option>
+                            {% if mess == 'mess1' %}
+                                <option value="Ground">Ground Floor</option>
+                                <option value="First">First Floor</option>
+                            {% else %}
+                                <option value="Second">Second Floor</option>
+                                <option value="Third">Third Floor</option>
+                            {% endif %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Total Waste (kg) *</label>
+                        <input type="number" name="waste_amount" required min="0" step="0.1"
+                               class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                               placeholder="Enter total waste in kg">
+                    </div>
+                </div>
+            </div>
+
+             <!-- Vegetarian Items  -->
+            {% if veg_menu_items %}
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 sm:p-8">
+                <div class="flex items-center mb-6">
+                    <i class="ph ph-leaf text-green-500 text-xl sm:text-2xl mr-3"></i>
+                    <h3 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">Vegetarian Items</h3>
+                </div>
+                <div class="grid gap-6">
+                    {% for item in veg_menu_items %}
+                    <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 sm:p-6">
+                        <h4 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ item }}</h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Prepared Amount (servings)</label>
+                                <input type="number" name="prepared_{{ item }}" min="0"
+                                       class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                       placeholder="Number of servings prepared">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Leftover Amount (servings)</label>
+                                <input type="number" name="leftover_{{ item }}" min="0"
+                                       class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                       placeholder="Number of servings left">
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+             <!-- Non-Vegetarian Items  -->
+            {% if non_veg_menu1 or non_veg_menu2 %}
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 sm:p-8">
+                <div class="flex items-center mb-6">
+                    <i class="ph ph-cooking-pot text-orange-500 text-xl sm:text-2xl mr-3"></i>
+                    <h3 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">Special Items</h3>
+                </div>
+                <div class="grid gap-6">
+                    {% for item, cost in (non_veg_menu1 + non_veg_menu2) %}
+                    <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 sm:p-6">
+                        <h4 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ item }} (₹{{ cost }})</h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Prepared Amount (servings)</label>
+                                <input type="number" name="prepared_{{ item }}" min="0"
+                                       class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                       placeholder="Number of servings prepared">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Leftover Amount (servings)</label>
+                                <input type="number" name="leftover_{{ item }}" min="0"
+                                       class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                       placeholder="Number of servings left">
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+             <!-- Submit Button  -->
+            <div class="text-center">
+                <button type="submit" class="btn-primary text-white px-8 sm:px-12 py-3 rounded-lg font-medium text-base sm:text-lg">
+                    <i class="ph ph-paper-plane mr-2"></i>
+                    Submit Waste Report
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

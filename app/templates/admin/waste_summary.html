@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Waste Summary - ManageIt{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+         <!-- Header  -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Waste Summary</h1>
+                <p class="text-gray-600 dark:text-gray-400 mt-2">Food waste analytics for the last 30 days</p>
+            </div>
+            <a href="/admin/dashboard" class="btn-primary text-white px-4 py-2 rounded-lg font-medium text-center">
+                <i class="ph ph-house mr-2"></i>
+                Dashboard
+            </a>
+        </div>
+
+        {% if waste_data %}
+         <!-- Summary Cards  -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
+                        <i class="ph ph-trash text-red-600 dark:text-red-400 text-lg sm:text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Total Waste</p>
+                        <p class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{{ waste_data|sum(attribute='total_waste') }} kg</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
+                        <i class="ph ph-chart-bar text-orange-600 dark:text-orange-400 text-lg sm:text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Average per Floor</p>
+                        <p class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+                            {{ "%.1f"|format(waste_data|sum(attribute='total_waste') / waste_data|length) if waste_data else "0.0" }} kg
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
+                        <i class="ph ph-buildings text-yellow-600 dark:text-yellow-400 text-lg sm:text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Floors Tracked</p>
+                        <p class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{{ waste_data|length }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+         <!-- Waste Chart  -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 sm:p-8 mb-8">
+            <h3 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-6">Waste by Floor</h3>
+            <div class="space-y-4">
+                {% for row in waste_data %}
+                <div class="flex items-center">
+                    <div class="w-20 sm:w-24 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">{{ row.floor }} Floor</div>
+                    <div class="flex-1 mx-3 sm:mx-4">
+                        <div class="bg-gray-200 dark:bg-gray-700 rounded-full h-3 sm:h-4">
+                            <div class="bg-red-500 h-3 sm:h-4 rounded-full" style="width: {{ (row.total_waste / max_waste_value * 100) | round(2) }}%"></div>
+                        </div>
+                    </div>
+                    <div class="w-16 sm:w-20 text-right text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">{{ row.total_waste }} kg</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+         <!-- Waste Table  -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div class="px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Floor-wise Waste Details</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 dark:bg-gray-700/50">
+                        <tr>
+                            <th class="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">Floor</th>
+                            <th class="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">Total Waste (kg)</th>
+                            <th class="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">Percentage</th>
+                            <th class="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                        {% for row in waste_data %}
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                            <td class="px-4 sm:px-6 py-4 text-xs sm:text-sm font-medium text-gray-900 dark:text-white">{{ row.floor }} Floor</td>
+                            <td class="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 dark:text-white">{{ row.total_waste }} kg</td>
+                            <td class="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 dark:text-white">
+                                {% set total_waste_sum = waste_data | sum(attribute='total_waste') %}
+                                {{ "%.1f"|format((row.total_waste / total_waste_sum * 100) if total_waste_sum > 0 else 0) }}%
+                            </td>
+                            <td class="px-4 sm:px-6 py-4 text-xs sm:text-sm">
+                                {% if row.total_waste > 100 %}
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200">
+                                        High Waste
+                                    </span>
+                                {% elif row.total_waste > 50 %}
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200">
+                                        Moderate
+                                    </span>
+                                {% else %}
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200">
+                                        Low Waste
+                                    </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+         <!-- No Data  -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 sm:p-12 text-center">
+            <i class="ph ph-trash text-4xl sm:text-6xl text-gray-300 dark:text-gray-600 mb-4"></i>
+            <h3 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-2">No Waste Data</h3>
+            <p class="text-gray-600 dark:text-gray-400">No waste data has been recorded in the last 30 days.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
