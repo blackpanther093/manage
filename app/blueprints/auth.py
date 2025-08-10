@@ -1,9 +1,11 @@
 """
 Authentication routes for ManageIt application
 """
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, current_app
 from werkzeug.security import check_password_hash, generate_password_hash
 from app.models.database import DatabaseManager
+from app.utils.helpers import send_confirmation_email
 import logging
 
 auth_bp = Blueprint('auth', __name__)
@@ -75,6 +77,123 @@ def login():
     
     return render_template('auth/login.html')
 
+@auth_bp.route('/signup', methods=['GET', 'POST'])
+def signup():
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip()
+        name = request.form.get('name', '').strip()
+        mess_choice = request.form.get('mess', '').strip()  # mess1 / mess2
+        password = request.form.get('password', '').strip()
+
+        if not email.endswith('@iiitdm.ac.in'):
+            flash("Only institute students are allowed.", 'error')
+            return render_template('auth/signup.html')
+
+        if not all([email, name, mess_choice, password]):
+            flash("Please fill in all fields.", 'error')
+            return render_template('auth/signup.html')
+
+        try:
+            with DatabaseManager.get_db_cursor(dictionary=True) as (cursor, connection):
+                cursor.execute("SELECT s_id FROM student WHERE mail = %s", (email,))
+                if cursor.fetchone():
+                    flash("Account already exists.", 'error')
+                    return render_template('auth/signup.html')
+
+                # Generate token with signup data
+                serializer = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+                token = serializer.dumps({
+                    'email': email,
+                    'name': name,
+                    'mess_choice': mess_choice,
+                    'password': generate_password_hash(password)
+                })
+
+                send_confirmation_email(email, token)
+                flash("A confirmation email has been sent. Please check your inbox.", 'success')
+                return redirect(url_for('auth.signup'))
+            
+        except Exception as e:
+            logging.error(f"Signup error: {e}")
+            flash("Error during signup. Try again.", 'error')
+            return redirect(url_for('auth.signup'))
+        
+    return render_template('auth/signup.html')
+
+@auth_bp.route('/confirm/<token>')
+def confirm_email(token):
+    serializer = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+    try:
+        data = serializer.loads(token, max_age=120)  # 2 min expiry
+    except SignatureExpired:
+        flash("The confirmation link has expired.", 'error')
+        return redirect(url_for('auth.signup'))
+    except BadSignature:
+        flash("Invalid confirmation link.", 'error')
+        return redirect(url_for('auth.signup'))
+
+    try:
+        with DatabaseManager.get_db_cursor() as (cursor, connection):
+            # Capacity check
+            cursor.execute("SELECT capacity, current_capacity FROM mess_data WHERE mess = %s", (data['mess_choice'],))
+            mess_data = cursor.fetchone()
+            if not mess_data:
+                flash("Selected mess not found.", 'error')
+                return redirect(url_for('auth.signup'))
+
+            capacity, current_capacity = mess_data
+            assigned_mess = data['mess_choice']
+            if current_capacity >= capacity:
+                other_mess = 'mess2' if assigned_mess == 'mess1' else 'mess1'
+                cursor.execute("SELECT capacity, current_capacity FROM mess_data WHERE mess_id = %s", (other_mess,))
+                other_data = cursor.fetchone()
+                if other_data and other_data[1] < other_data[0]:
+                    assigned_mess = other_mess
+                    flash(f"Selected mess is full. Assigned to {assigned_mess} instead.", 'info')
+                else:
+                    flash("All messes are full.", 'error')
+                    return redirect(url_for('auth.signup'))
+
+            # Insert confirmed student
+            student_id = data['email'].split('@')[0]
+            cursor.execute("""
+                INSERT INTO student (s_id, name, mess, password, mail)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (student_id, data['name'], assigned_mess, data['password'], data['email']))
+
+            cursor.execute("""
+                UPDATE mess_data
+                SET current_capacity = current_capacity + 1
+                WHERE mess_id = %s
+            """, (assigned_mess,))
+
+            connection.commit()
+
+        # flash("Your account has been confirmed! You can now log in.", 'success')
+        # return redirect(url_for('auth.login'))
+
+        # Set session directly so user is logged in
+        # MESS_OPTIONS = {
+        #     "food_sutra": "mess1",
+        #     "sheila": "mess2"
+        # }
+
+        # assigned_mess = MESS_OPTIONS[assigned_mess] if assigned_mess in MESS_OPTIONS else assigned_mess
+
+        session.update({
+            'student_id': student_id,
+            'student_name': data['name'],
+            'mess': assigned_mess,
+            'role': 'student'
+        })
+
+        flash("Your account has been confirmed! Welcome to your dashboard.", 'success')
+        return redirect(url_for('student.dashboard'))
+    
+    except Exception as e:
+        logging.error(f"Email confirmation error: {e}")
+        flash("Error confirming account.", 'error')
+        return redirect(url_for('auth.signup'))
 
 @auth_bp.route('/logout')
 def logout():

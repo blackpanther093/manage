@@ -57,7 +57,7 @@ class DatabaseManager:
         """Check if student ID is valid"""
         try:
             with DatabaseManager.get_db_cursor() as (cursor, connection):
-                cursor.execute("SELECT s_id FROM students WHERE s_id = %s", (student_id,))
+                cursor.execute("SELECT s_id FROM student WHERE s_id = %s", (student_id,))
                 return cursor.fetchone() is not None
         except Exception as e:
             logging.error(f"Error validating student: {e}")

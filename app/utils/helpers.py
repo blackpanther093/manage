@@ -6,7 +6,9 @@ import pytz
 import mysql.connector
 from app.models.database import DatabaseManager
 import logging
-
+import smtplib
+from email.mime.text import MIMEText
+from flask import current_app, url_for
 
 def get_fixed_time():
     """Get current time in IST timezone"""
@@ -161,3 +163,20 @@ def avg_rating():
     except Exception as e:
         logging.error(f"Error fetching average ratings: {e}")
         return (0, 0.0, 0, 0.0)
+
+def send_confirmation_email(recipient_email, token):
+    """Send account confirmation email with token link."""
+    confirm_url = url_for('auth.confirm_email', token=token, _external=True)
+    subject = "Confirm your ManageIt account"
+    body = f"Hi,\n\nClick the link below to confirm your account:\n{confirm_url}\n\nIf you didn't request this, please ignore."
+
+    msg = MIMEText(body)
+    msg['Subject'] = subject
+    msg['From'] = current_app.config['MAIL_DEFAULT_SENDER']
+    msg['To'] = recipient_email
+
+    with smtplib.SMTP(current_app.config['MAIL_SERVER'], current_app.config['MAIL_PORT']) as server:
+        if current_app.config['MAIL_USE_TLS']:
+            server.starttls()
+        server.login(current_app.config['MAIL_USERNAME'], current_app.config['MAIL_PASSWORD'])
+        server.send_message(msg)
