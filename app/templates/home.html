@@ -36,10 +36,12 @@
         {% if meal %}
             <!-- Hero Section -->
             <div class="text-center mb-12 lg:mb-16">
+                {% if is_serving %}
                 <div class="inline-flex items-center px-4 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium mb-4">
                     <i class="ph ph-clock mr-2"></i>
                     Now Serving
                 </div>
+                {% endif %}
                 <h2 class="text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-4">
                     Today's {{ meal }}
                 </h2>
@@ -198,7 +200,7 @@
                 <p class="text-xl text-gray-600 dark:text-gray-400 mb-8">Please check back during meal times</p>
                 <div class="inline-flex items-center px-4 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded-full text-sm">
                     <i class="ph ph-info mr-2"></i>
-                    Meal times: 8-10 AM, 12-2 PM, 4-6 PM, 8-10 PM
+                    Meal times: 7-9 AM, 12-2 PM, 5-6 PM, 7-9 PM
                 </div>
             </div>
         {% endif %}

@@ -3,7 +3,8 @@ Mess official routes for ManageIt application
 """
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from app.models.database import DatabaseManager
-from app.utils.helpers import get_fixed_time, get_current_meal, get_menu, is_odd_week
+from app.utils.helpers import get_fixed_time, get_current_meal, get_menu, is_odd_week, get_notifications, clear_non_veg_menu_cache, get_non_veg_menu, get_amount_data, get_payment_summary, clear_payment_summary_cache, get_waste_feedback, clear_waste_feedback_cache, get_switch_activity, clear_waste_summary_cache
+from app.scheduler import high_low_alerts_cache
 import pandas as pd
 import plotly.express as px
 import logging
@@ -36,7 +37,6 @@ def dashboard():
                          mess_name=mess_name, 
                          username=username)
 
-
 @mess_bp.route('/add-non-veg-menu', methods=['GET', 'POST'])
 def add_non_veg_menu():
     """Add non-vegetarian menu items"""
@@ -45,14 +45,15 @@ def add_non_veg_menu():
         return redirect_response
     
     mess = session.get('mess')
-    meal, _, _, _ = get_menu()
+    meal, _ = get_menu()
     
     if not meal:
         flash("No meal available at the moment.", 'error')
         return redirect(url_for('main.home'))
     
     previous_items = []
-    
+    created_at = get_fixed_time().date()      
+
     if request.method == 'POST':
         food_items = request.form.getlist('food_item[]')
         costs = request.form.getlist('cost[]')
@@ -65,23 +66,13 @@ def add_non_veg_menu():
             flash("Invalid input. Ensure all fields are filled.", 'error')
             return redirect(url_for('mess.add_non_veg_menu'))
         
+        # created_at = get_fixed_time().date()
+        existing_items = get_non_veg_menu(mess, created_at, meal)
+        print(f"Existing items for {mess} on {created_at} ({meal}): {existing_items}")
         try:
             with DatabaseManager.get_db_cursor(dictionary=True) as (cursor, connection):
-                created_at = get_fixed_time().date()
-                
-                # Check for duplicates
-                placeholders = ', '.join(['%s'] * len(food_items))
-                query = f"""
-                    SELECT food_item FROM non_veg_menu_items n
-                    JOIN non_veg_menu_main m ON n.menu_id = m.menu_id
-                    WHERE menu_date = %s AND meal = %s AND mess = %s 
-                    AND LOWER(TRIM(food_item)) IN ({placeholders})
-                """
-                normalized_input = [item.lower().strip() for item in food_items]
-                params = [created_at, meal, mess] + normalized_input
-                cursor.execute(query, params)
-                
-                existing_items = {row['food_item'].strip().lower() for row in cursor.fetchall()}
+                # created_at = get_fixed_time().date()
+                # existing_items = get_non_veg_menu(mess, created_at, meal)
                 duplicates = [item for item in food_items if item.strip().lower() in existing_items]
                 
                 filtered_items_and_costs = [
@@ -113,6 +104,8 @@ def add_non_veg_menu():
                 connection.commit()
                 flash("Item(s) added successfully.", 'success')
                 
+                clear_non_veg_menu_cache(mess)
+
         except Exception as e:
             logging.error(f"Add non-veg menu error: {e}")
             flash("An error occurred while adding the menu.", 'error')
@@ -120,51 +113,49 @@ def add_non_veg_menu():
         return redirect(url_for('mess.add_non_veg_menu'))
     
     # Load previous items
-    try:
-        with DatabaseManager.get_db_cursor() as (cursor, connection):
-            created_at = get_fixed_time().date()
-            cursor.execute("""
-                SELECT item_id, food_item, cost 
-                FROM non_veg_menu_items i 
-                JOIN non_veg_menu_main m ON i.menu_id = m.menu_id
-                WHERE DATE(menu_date) = %s AND meal = %s AND mess = %s
-            """, (created_at, meal, mess))
-            previous_items = cursor.fetchall()
-            
-    except Exception as e:
-        logging.error(f"Load previous menu error: {e}")
-        flash("Unable to load existing menu items.", 'error')
+    previous_items = get_non_veg_menu(mess, created_at, meal)
+    print(f"Previous items for {mess} on {created_at} ({meal}): {previous_items}")
     
     return render_template('mess/add_non_veg_menu.html', 
                          meal=meal, 
                          mess=mess, 
                          previous_items=previous_items)
 
-
 @mess_bp.route('/delete-item', methods=['POST'])
 def delete_item():
-    """Delete non-veg menu item"""
     redirect_response = require_mess_login()
     if redirect_response:
         return redirect_response
-    
-    item_id = request.form.get('item_id')
-    if not item_id:
+
+    mess = session.get('mess')
+    food_item = request.form.get('food_item')
+    created_at = get_fixed_time().date()
+    meal = get_current_meal()
+
+    if not food_item:
         flash("Error: Item not found", 'error')
         return redirect(url_for('mess.add_non_veg_menu'))
-    
+
     try:
         with DatabaseManager.get_db_cursor() as (cursor, connection):
-            cursor.execute("DELETE FROM non_veg_menu_items WHERE item_id = %s", (item_id,))
+            cursor.execute("""
+                DELETE FROM non_veg_menu_items 
+                WHERE menu_id in (
+                    SELECT menu_id FROM non_veg_menu_main
+                    WHERE menu_date = %s AND meal = %s AND mess = %s
+                )
+                AND food_item = %s
+            """, (created_at, meal, mess, food_item))
             connection.commit()
             flash('Item deleted successfully!', 'success')
-            
+
+            clear_non_veg_menu_cache(mess)
+
     except Exception as e:
         logging.error(f"Delete item error: {e}")
         flash('An error occurred while deleting the item.', 'error')
-    
-    return redirect(url_for('mess.add_non_veg_menu'))
 
+    return redirect(url_for('mess.add_non_veg_menu'))
 
 @mess_bp.route('/waste-feedback', methods=['GET', 'POST'])
 def waste_feedback():
@@ -175,8 +166,10 @@ def waste_feedback():
     
     mess = session.get('mess')
     current_hour = get_fixed_time().hour
-    meal, veg_menu_items, non_veg_menu1, non_veg_menu2 = get_menu()
-    
+    meal, veg_menu_items = get_menu()
+    non_veg_menu1 = get_non_veg_menu("mess1")
+    non_veg_menu2 = get_non_veg_menu("mess2")
+
     # Check meal availability
     if ((meal == 'Breakfast' and current_hour < 9) or 
         (meal == 'Lunch' and current_hour < 14) or 
@@ -261,6 +254,8 @@ def waste_feedback():
                 
                 connection.commit()
                 flash("Waste data submitted successfully!", 'success')
+                clear_waste_feedback_cache(mess)
+                clear_waste_summary_cache()
                 return redirect(url_for('mess.dashboard'))
                 
         except Exception as e:
@@ -273,7 +268,6 @@ def waste_feedback():
                          non_veg_menu1=non_veg_menu1, 
                          non_veg_menu2=non_veg_menu2, 
                          mess=mess)
-
 
 @mess_bp.route('/add-payment', methods=['GET', 'POST'])
 def add_payment():
@@ -295,6 +289,8 @@ def add_payment():
             flash("All fields are required.", "error")
             return redirect(url_for('mess.add_payment'))
         
+        # Get food item cost
+        amount_data = get_amount_data(food_item, mess_name, created_at, meal)
         try:
             with DatabaseManager.get_db_cursor() as (cursor, connection):
                 # Validate student
@@ -304,15 +300,6 @@ def add_payment():
                 if not student_data or student_data[0] != mess_name:
                     flash("Invalid student ID or student not from your mess.", "error")
                     return redirect(url_for('mess.add_payment'))
-                
-                # Get food item cost
-                cursor.execute("""
-                    SELECT item_id, cost FROM non_veg_menu_items n
-                    JOIN non_veg_menu_main m ON n.menu_id = m.menu_id
-                    WHERE n.food_item = %s AND m.menu_date = %s 
-                    AND m.meal = %s AND mess = %s
-                """, (food_item, created_at, meal, mess_name))
-                amount_data = cursor.fetchone()
                 
                 if not amount_data:
                     flash("Invalid food item selected.", "error")
@@ -328,7 +315,8 @@ def add_payment():
                 
                 connection.commit()
                 flash("Payment details entered successfully!", "success")
-                
+                clear_payment_summary_cache(mess_name)
+
         except Exception as e:
             logging.error(f"Add payment error: {e}")
             flash("An error occurred while adding the payment.", "error")
@@ -355,7 +343,6 @@ def add_payment():
                          meal=meal, 
                          mess_name=mess_name)
 
-
 @mess_bp.route('/payment-summary')
 def payment_summary():
     """Payment summary for mess officials"""
@@ -364,29 +351,11 @@ def payment_summary():
         return redirect_response
     
     mess_name = session.get('mess')
-    summary_data = []
-    
-    try:
-        with DatabaseManager.get_db_cursor() as (cursor, connection):
-            created_at = get_fixed_time().date()
-            cursor.execute("""
-                SELECT payment_date, GROUP_CONCAT(food_item SEPARATOR ', ') AS food_item, 
-                       meal, SUM(amount) AS total_amount
-                FROM payment
-                WHERE mess = %s AND payment_date >= %s - INTERVAL 30 DAY
-                GROUP BY payment_date, meal
-                ORDER BY payment_date DESC
-            """, (mess_name, created_at))
-            summary_data = cursor.fetchall()
-            
-    except Exception as e:
-        logging.error(f"Payment summary error: {e}")
-        flash("An error occurred while fetching payment data.", "error")
+    summary_data = get_payment_summary(mess_name)
     
     return render_template('mess/payment_summary.html', 
                          summary_data=summary_data, 
                          mess_name=mess_name)
-
 
 @mess_bp.route('/switch-activity')
 def switch_activity():
@@ -396,40 +365,12 @@ def switch_activity():
         return redirect_response
     
     mess_name = session['mess']
-    joined_students = []
-    left_students = []
-    
-    try:
-        with DatabaseManager.get_db_cursor(dictionary=True) as (cursor, connection):
-            cursor.execute("SELECT is_enabled FROM feature_toggle LIMIT 1")
-            result = cursor.fetchone()
-            entry = result['is_enabled'] if result else False
-            
-            if not entry:
-                # Students joining this mess
-                cursor.execute("""
-                    SELECT s_id FROM mess_switch_requests WHERE desired_mess = %s
-                """, (mess_name,))
-                joined_rows = cursor.fetchall()
-                joined_ids = [row['s_id'] for row in joined_rows]
-                joined_students = [{'count': len(joined_ids), 's_id': joined_ids}]
-                
-                # Students leaving this mess
-                cursor.execute("""
-                    SELECT s_id FROM mess_switch_requests WHERE desired_mess != %s
-                """, (mess_name,))
-                left_rows = cursor.fetchall()
-                left_ids = [row['s_id'] for row in left_rows]
-                left_students = [{'count': len(left_ids), 's_id': left_ids}]
-                
-    except Exception as e:
-        logging.error(f"Switch activity error: {e}")
+    joined_students, left_students = get_switch_activity(mess_name)
     
     return render_template('mess/switch_activity.html',
                          mess_name=mess_name,
                          joined_students=joined_students,
                          left_students=left_students)
-
 
 @mess_bp.route('/notifications')
 def notifications():
@@ -439,53 +380,12 @@ def notifications():
         return redirect_response
     
     mess_name = session['mess']
-    notifications = []
+    notifications = get_notifications('mess_official')
     
-    try:
-        with DatabaseManager.get_db_cursor() as (cursor, connection):
-            created_at = get_fixed_time().date()
-            
-            # Get general notifications
-            cursor.execute("""
-                SELECT message, created_at FROM notifications 
-                WHERE recipient_type IN ('mess_official', 'both') 
-                AND created_at >= %s - INTERVAL 7 DAY 
-                ORDER BY created_at DESC
-            """, (created_at,))
-            notifications.extend([(row[0], row[1]) for row in cursor.fetchall()])
-            
-            # High waste warnings
-            floors = ['Ground', 'First'] if mess_name == 'mess1' else ['Second', 'Third']
-            cursor.execute("""
-                SELECT floor, SUM(total_waste) as total_waste, waste_date 
-                FROM waste_summary 
-                WHERE waste_date >= %s - INTERVAL 7 DAY 
-                AND (floor = %s OR floor = %s)
-                GROUP BY floor, waste_date
-                HAVING SUM(total_waste) > 50
-                ORDER BY waste_date DESC
-            """, (created_at, floors[0], floors[1]))
-            
-            for floor, waste, date in cursor.fetchall():
-                notifications.append((f"⚠️ High waste recorded on {floor} Floor with {waste} Kg.", date))
-            
-            # Low feedback alerts
-            cursor.execute("""
-                SELECT AVG(d.rating), s.meal, s.feedback_date 
-                FROM feedback_details d
-                JOIN feedback_summary s ON d.feedback_id = s.feedback_id
-                WHERE mess = %s AND s.feedback_date >= %s - INTERVAL 7 DAY
-                GROUP BY s.meal, s.feedback_date
-                HAVING AVG(d.rating) < 3.0
-                ORDER BY s.feedback_date DESC
-            """, (mess_name, created_at))
-            
-            for rating, meal, date in cursor.fetchall():
-                notifications.append((f"❗ Low feedback detected for {meal} on {date} with Avg. Rating {round(rating, 2)}", date))
-                
-    except Exception as e:
-        logging.error(f"Mess notifications error: {e}")
-    
+    # Append precomputed high/low alerts
+    alerts = high_low_alerts_cache.get(mess_name, [])
+    notifications.extend(alerts)
+
     return render_template("notifications.html", 
                          notifications=notifications, 
                          back_url='/mess/dashboard')
@@ -495,34 +395,18 @@ def review_waste_feedback():
     redirect_response = require_mess_login()
     if redirect_response:
         return redirect_response
+    
+    mess_name = session['mess']
 
+    waste_data, feedback_data = get_waste_feedback(mess_name)
 
+    if not waste_data or not feedback_data:
+        return render_template('mess/review_waste_feedback.html', no_data=True)
+    
     try:
         with DatabaseManager.get_db_cursor(dictionary=True) as (cursor, connection):
 
-            created_at = get_fixed_time().date()
             current_meal = get_current_meal()
-            # Fetch waste and feedback from last 30 days
-            cursor.execute("""
-                SELECT w.waste_date, w.floor, w.meal, wd.food_item, wd.leftover_amount
-                FROM waste_summary w
-                JOIN waste_details wd ON w.waste_id = wd.waste_id
-                WHERE w.waste_date >= %s - INTERVAL 30 DAY
-            """, (created_at,))
-            waste_data = cursor.fetchall()
-
-            cursor.execute("""
-                SELECT fs.feedback_date, fs.meal, fs.mess, fd.food_item, fd.rating
-                FROM feedback_summary fs
-                JOIN feedback_details fd ON fs.feedback_id = fd.feedback_id
-                WHERE fs.feedback_date >= %s - INTERVAL 30 DAY
-            """, (created_at,))
-            feedback_data = cursor.fetchall()
-
-            connection.close()
-
-            if not waste_data or not feedback_data:
-                return render_template('mess/review_waste_feedback.html', no_data=True)
 
             # Convert to DataFrames
             waste_df = pd.DataFrame(waste_data)

@@ -4,6 +4,8 @@ Flask Application Factory
 """
 from flask import Flask
 from app.config import Config
+from app.models.database import init_db_pool
+from app.scheduler import start_scheduler
 import os
 
 
@@ -25,4 +27,7 @@ def create_app(config_class=Config):
     app.register_blueprint(mess_bp, url_prefix='/mess')
     app.register_blueprint(admin_bp, url_prefix='/admin')
     
+    with app.app_context():
+        init_db_pool()
+    start_scheduler(app)
     return app

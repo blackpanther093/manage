@@ -3,11 +3,10 @@ Admin routes for ManageIt application
 """
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from app.models.database import DatabaseManager
-from app.utils.helpers import get_fixed_time, get_current_meal, is_odd_week
+from app.utils.helpers import get_fixed_time, get_current_meal, is_odd_week, clear_notifications_cache, clear_switch_activity_cache, clear_feature_toggle_cache, get_feedback_summary, get_feedback_detail, get_payment_summary, get_waste_summary, clear_menu_cache
 import logging
 
 admin_bp = Blueprint('admin', __name__)
-
 
 def require_admin_login():
     """Decorator to require admin login"""
@@ -15,7 +14,6 @@ def require_admin_login():
         flash("Please log in as an admin to access this page.", 'error')
         return redirect(url_for('auth.login'))
     return None
-
 
 @admin_bp.route('/dashboard')
 def dashboard():
@@ -43,7 +41,6 @@ def dashboard():
                          enabled_time=enabled_time, 
                          mess_switch_enabled=toggle_status)
 
-
 @admin_bp.route('/select-mess', methods=['GET', 'POST'])
 def select_mess():
     """Mess selection for admin"""
@@ -63,7 +60,6 @@ def select_mess():
             flash("Invalid mess selection. Please try again.", "error")
     
     return render_template('admin/select_mess.html')
-
 
 @admin_bp.route('/toggle-mess-switch', methods=['POST'])
 def toggle_mess_switch():
@@ -119,13 +115,15 @@ def toggle_mess_switch():
                 flash("Mess switching feature has been turned ON", "success")
             
             connection.commit()
-            
+            clear_switch_activity_cache("mess1")
+            clear_switch_activity_cache("mess2")
+            clear_feature_toggle_cache()
+
     except Exception as e:
         logging.error(f"Toggle mess switch error: {e}")
         flash('Something went wrong while updating the feature toggle.', 'error')
     
     return redirect(url_for('admin.dashboard'))
-
 
 @admin_bp.route('/send-notification', methods=['GET', 'POST'])
 def send_notification():
@@ -151,13 +149,13 @@ def send_notification():
                 """, (message, recipient_type, created_at))
                 connection.commit()
                 flash("Notification sent successfully!", "success")
-                
+            clear_notifications_cache(recipient_type)
+
         except Exception as e:
             logging.error(f"Send notification error: {e}")
             flash("Error sending notification.", "error")
     
     return render_template('admin/send_notification.html')
-
 
 @admin_bp.route('/update-veg-menu', methods=['GET', 'POST'])
 def update_veg_menu():
@@ -195,7 +193,8 @@ def update_veg_menu():
                 
                 connection.commit()
                 flash('Veg menu updated temporarily for today.', 'success')
-                
+                clear_menu_cache()
+
         except Exception as e:
             logging.error(f"Update veg menu error: {e}")
             flash('Error updating menu.', 'error')
@@ -206,7 +205,6 @@ def update_veg_menu():
                          week_type=week_type, 
                          day=day, 
                          meal=meal)
-
 
 @admin_bp.route('/restore-default-veg-menu', methods=['POST'])
 def restore_default_veg_menu():
@@ -228,6 +226,7 @@ def restore_default_veg_menu():
             
             if cursor.rowcount > 0:
                 flash('Veg menu restored to default.', 'success')
+                clear_menu_cache()
             else:
                 flash('No temporary menu found to restore.', 'info')
             
@@ -238,7 +237,6 @@ def restore_default_veg_menu():
         flash('Error restoring menu.', 'error')
     
     return redirect(url_for('admin.update_veg_menu'))
-
 
 @admin_bp.route('/feedback-summary')
 def feedback_summary():
@@ -251,24 +249,10 @@ def feedback_summary():
     if not mess_name:
         return redirect(url_for('admin.select_mess'))
     
-    feedback_summary_data = []
-    try:
-        with DatabaseManager.get_db_cursor() as (cursor, connection):
-            cursor.execute("""
-                SELECT s.feedback_date, s.meal, COUNT(DISTINCT s.s_id) AS total_students, 
-                       AVG(d.rating) AS avg_rating
-                FROM feedback_summary s
-                JOIN feedback_details d ON s.feedback_id = d.feedback_id
-                WHERE mess = %s
-                GROUP BY s.feedback_date, s.meal
-                ORDER BY s.feedback_date DESC
-            """, (mess_name,))
-            feedback_summary_data = cursor.fetchall()
-            
-    except Exception as e:
-        logging.error(f"Feedback summary error: {e}")
-        flash("Error loading feedback data.", "error")
-    
+    feedback_summary_data = get_feedback_summary(mess_name)
+    if not feedback_summary_data:
+        flash("No feedback data available.", "warning")
+
     return render_template('admin/feedback_summary.html', 
                          feedback_summary_data=feedback_summary_data)
 
@@ -284,29 +268,15 @@ def feedback_detail(feedback_date, meal):
         flash("Please select a mess.", "error")
         return redirect(url_for('admin.select_mess'))
 
-    feedback_data = []
-    try:
-        with DatabaseManager.get_db_cursor() as (cursor, connection):
-            cursor.execute("""
-                SELECT fs.s_id, ROUND(AVG(fd.rating), 2) AS avg_rating
-                FROM feedback_summary fs
-                JOIN feedback_details fd ON fs.feedback_id = fd.feedback_id
-                WHERE fs.feedback_date = %s AND fs.meal = %s AND mess = %s
-                GROUP BY fs.s_id
-                HAVING COUNT(fd.rating) > 0
-            """, (feedback_date, meal, mess_name))
-            feedback_data = cursor.fetchall()
-
-    except Exception as e:
-        logging.error(f"Error fetching feedback details: {e}")
-        flash("Error loading feedback details.", "error")
+    feedback_data = get_feedback_detail(feedback_date, meal, mess_name)
+    if not feedback_data:
+        flash("No feedback data available.", "warning")
         return redirect(url_for('admin.feedback_summary'))
 
     return render_template('admin/feedback_details.html',
                            feedback_data=feedback_data,
                            feedback_date=feedback_date,
                            meal=meal)
-
 
 @admin_bp.route('/student-feedback/<s_id>/<feedback_date>/<meal>')
 def student_feedback(s_id, feedback_date, meal):
@@ -347,7 +317,6 @@ def student_feedback(s_id, feedback_date, meal):
                            feedback_date=feedback_date,
                            meal=meal)
 
-
 @admin_bp.route('/waste-summary')
 def waste_summary():
     """Waste summary for admin"""
@@ -355,42 +324,16 @@ def waste_summary():
     if redirect_response:
         return redirect_response
 
-    waste_data = []
-    max_waste_value = 1  # Avoid division by zero
+    waste_data, max_waste_value = get_waste_summary()
 
-    try:
-        with DatabaseManager.get_db_cursor(dictionary=True) as (cursor, connection):
-            created_at = get_fixed_time().date()
-            cursor.execute("""
-                SELECT floor, SUM(total_waste) AS total_waste
-                FROM waste_summary
-                WHERE waste_date >= %s - INTERVAL 30 DAY
-                GROUP BY floor
-                ORDER BY floor
-            """, (created_at,))
-            waste_data = cursor.fetchall()
-
-            # 🔧 Convert Decimal to float to avoid Jinja type errors
-            for row in waste_data:
-                row['total_waste'] = float(row['total_waste'])
-
-            # ✅ Calculate max value safely
-            if waste_data:
-                max_waste_value = max(row['total_waste'] for row in waste_data)
-                if max_waste_value == 0:
-                    max_waste_value = 1  # Prevent divide by zero
-
-    except Exception as e:
-        logging.error(f"Waste summary error: {e}")
-        flash("Error loading waste data.", "error")
+    if not waste_data:
+        flash("No waste data available.", "warning")
 
     return render_template(
         'admin/waste_summary.html',
         waste_data=waste_data,
         max_waste_value=max_waste_value
     )
-
-
 
 @admin_bp.route('/payment-summary')
 def payment_summary():
@@ -404,23 +347,7 @@ def payment_summary():
         flash("Select mess first", "error")
         return redirect(url_for('admin.select_mess'))
     
-    summary_data = []
-    try:
-        with DatabaseManager.get_db_cursor() as (cursor, connection):
-            created_at = get_fixed_time().date()
-            cursor.execute("""
-                SELECT payment_date, GROUP_CONCAT(food_item SEPARATOR ', ') AS food_item, 
-                       meal, SUM(amount) AS total_amount
-                FROM payment
-                WHERE mess = %s AND payment_date >= %s - INTERVAL 30 DAY
-                GROUP BY payment_date, meal
-                ORDER BY payment_date DESC
-            """, (mess_name, created_at))
-            summary_data = cursor.fetchall()
-            
-    except Exception as e:
-        logging.error(f"Admin payment summary error: {e}")
-        flash("Error loading payment data.", "error")
+    summary_data = get_payment_summary(mess_name)
     
     return render_template('admin/payment_summary.html', 
                          summary_data=summary_data, 
