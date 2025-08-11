@@ -9,6 +9,17 @@ import logging
 import smtplib
 from email.mime.text import MIMEText
 from flask import current_app, url_for
+# import time
+from threading import Lock
+
+_cache_lock = Lock()
+
+_cached_meal = None
+_cached_menu_data = None  # Tuple: (meal, veg_menu_items, non_veg_menu1, non_veg_menu2)
+_cached_avg_ratings = None  # Tuple: (count1, avg1, count2, avg2)
+_cached_timestamp = None
+
+# CACHE_TTL_SECONDS = 60 * 60  # 1 hour TTL (optional, mostly relies on meal changes)
 
 def get_fixed_time():
     """Get current time in IST timezone"""
@@ -16,6 +27,27 @@ def get_fixed_time():
     ist = pytz.timezone("Asia/Kolkata")
     return utc_now.astimezone(ist)
 
+def seconds_until_next_meal():
+    now = get_fixed_time()
+    hour = now.hour
+    minute = now.minute
+    total_minutes = hour * 60 + minute
+
+    # Meal boundaries in minutes
+    boundaries = [
+        0,          # Breakfast start
+        11 * 60,    # Lunch start
+        16 * 60,    # Snacks start
+        18 * 60 + 30, # Dinner start
+        24 * 60     # End of day
+    ]
+
+    for b in boundaries:
+        if b > total_minutes:
+            return (b - total_minutes) * 60  # seconds until next boundary
+    
+    # If somehow no boundary found (e.g. at end of day), return 1 hour as fallback
+    return 3600
 
 def is_odd_week(date=None):
     """Determine if the given date falls in an odd or even week"""
@@ -25,7 +57,6 @@ def is_odd_week(date=None):
     start_date = datetime(2025, 7, 27).date()
     days_difference = (date - start_date).days
     return (days_difference // 7) % 2 == 0
-
 
 def get_current_meal(hour=None):
     """Get current meal based on time and clean old data"""
@@ -65,8 +96,7 @@ def get_current_meal(hour=None):
         return "Dinner"
     return None
 
-
-def get_menu(date=None, meal=None):
+def get_menu_cached(date=None, meal=None):
     """Fetch menu details based on date and meal"""
     try:
         date = date or get_fixed_time().date()
@@ -119,8 +149,7 @@ def get_menu(date=None, meal=None):
         logging.error(f"Error fetching menu: {e}")
         return None, [], [], []
 
-
-def avg_rating():
+def avg_rating_cached():
     """Get average ratings for both messes"""
     meal = get_current_meal()
     if not meal:
@@ -163,6 +192,71 @@ def avg_rating():
     except Exception as e:
         logging.error(f"Error fetching average ratings: {e}")
         return (0, 0.0, 0, 0.0)
+
+CACHE_TTL_SECONDS = seconds_until_next_meal()
+
+def get_menu(date=None, meal=None):
+    global _cached_meal, _cached_menu_data, _cached_timestamp
+    
+    current_meal = meal or get_current_meal()
+    now = get_fixed_time().timestamp()
+    
+    with _cache_lock:
+        # Cache expired if:
+        # - no cache
+        # - meal changed since last cache
+        # - TTL expired (optional safety)
+        if (_cached_meal != current_meal
+            or _cached_menu_data is None
+            or _cached_timestamp is None
+            or now - _cached_timestamp > CACHE_TTL_SECONDS):
+            
+            # Refresh cache by calling original DB query
+            menu_data = get_menu_cached(date=date, meal=current_meal)
+            
+            # Update cache
+            _cached_meal = current_meal
+            _cached_menu_data = menu_data
+            _cached_timestamp = now
+            
+            return menu_data
+        # print(f"Using cached menu for meal: {_cached_meal}")  # Debug log
+        # Return cached data
+        return _cached_menu_data
+
+def avg_rating():
+    global _cached_avg_ratings, _cached_timestamp, _cached_meal
+    
+    current_meal = get_current_meal()
+    if not current_meal:
+        return (0, 0.0, 0, 0.0)
+    
+    now = get_fixed_time().timestamp()
+    
+    with _cache_lock:
+        if (_cached_meal != current_meal
+            or _cached_avg_ratings is None
+            or _cached_timestamp is None
+            or now - _cached_timestamp > CACHE_TTL_SECONDS):
+            
+            # Refresh cache by calling original DB query
+            avg_ratings = avg_rating_cached()
+            
+            _cached_meal = current_meal
+            _cached_avg_ratings = avg_ratings
+            _cached_timestamp = now
+            
+            return avg_ratings
+        
+        return _cached_avg_ratings
+
+def clear_menu_cache():
+    global _cached_meal, _cached_menu_data, _cached_avg_ratings, _cached_timestamp
+    with _cache_lock:
+        _cached_meal = None
+        _cached_menu_data = None
+        _cached_avg_ratings = None
+        _cached_timestamp = None
 
 def send_confirmation_email(recipient_email, token):
     """Send account confirmation email with token link."""
