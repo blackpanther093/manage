@@ -15,16 +15,16 @@ def home():
     start_time = pytime.time()
     try:
         meal, veg_menu_items = get_menu() or (None, [])
-        logging.info(f"DEBUG get_menu() returned meal: {meal}, veg_menu_items: {veg_menu_items}")
+        # logging.info(f"DEBUG get_menu() returned meal: {meal}, veg_menu_items: {veg_menu_items}")
         non_veg_menu1 = get_non_veg_menu("mess1")
-        logging.debug(f"non_veg_menu1: {non_veg_menu1}")
+        # logging.debug(f"non_veg_menu1: {non_veg_menu1}")
         non_veg_menu2 = get_non_veg_menu("mess2")
-        logging.debug(f"non_veg_menu2: {non_veg_menu2}")
+        # logging.debug(f"non_veg_menu2: {non_veg_menu2}")
         mess1_count, mess1_rating, mess2_count, mess2_rating = avg_rating()
-        logging.debug(f"Ratings: mess1_count={mess1_count}, mess1_rating={mess1_rating}, mess2_count={mess2_count}, mess2_rating={mess2_rating}")
+        # logging.debug(f"Ratings: mess1_count={mess1_count}, mess1_rating={mess1_rating}, mess2_count={mess2_count}, mess2_rating={mess2_rating}")
 
         current_time = get_fixed_time().time()
-        logging.debug(f"Current time: {current_time}")  # << Add this
+        # logging.debug(f"Current time: {current_time}")  # << Add this
 
         # Define serving time intervals as tuples of (start_time, end_time)
         serving_intervals = [
@@ -33,16 +33,16 @@ def home():
             (time(17, 0), time(18, 0)),
             (time(19, 0), time(21, 0)),
         ]
-        logging.debug(f"Serving intervals: {serving_intervals}")  # << Add this
+        # logging.debug(f"Serving intervals: {serving_intervals}")  # << Add this
 
         is_serving = any(start <= current_time <= end for start, end in serving_intervals)
-        logging.debug(f"is_serving: {is_serving}")  # << Add this
+        # logging.debug(f"is_serving: {is_serving}")  # << Add this
 
         if not meal or (not veg_menu_items and not non_veg_menu1 and not non_veg_menu2):
-            logging.info(f"Home route loaded in {pytime.time() - start_time:.3f} seconds")
+            # logging.info(f"Home route loaded in {pytime.time() - start_time:.3f} seconds")
             return render_template("home.html", meal=None, is_serving=is_serving)
         
-        logging.info(f"Home route loaded in {pytime.time() - start_time:.3f} seconds")
+        # logging.info(f"Home route loaded in {pytime.time() - start_time:.3f} seconds")
         return render_template("home.html",
             meal=meal,
             veg_menu_items=veg_menu_items,
@@ -55,8 +55,8 @@ def home():
             is_serving=is_serving
         )
     except Exception as e:
-        logging.exception("Exception occurred in home route")
-        logging.info(f"Home route loaded in {pytime.time() - start_time:.3f} seconds (with error)")
+        # logging.exception("Exception occurred in home route")
+        # logging.info(f"Home route loaded in {pytime.time() - start_time:.3f} seconds (with error)")
         return render_template("home.html", meal=None, error="Unable to load menu data", is_serving=False)
 
 
