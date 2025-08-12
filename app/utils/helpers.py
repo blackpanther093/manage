@@ -5,12 +5,15 @@ from datetime import datetime, timezone
 import pytz
 import mysql.connector
 from app.models.database import DatabaseManager
+from app.models.feedback_classifier import classify_feedback
 import logging
 import smtplib
 from email.mime.text import MIMEText
 from flask import current_app, url_for
 # import time
 import threading
+import requests
+import markdown
 # from threading import Lock
 
 _cache_lock = threading.RLock()
@@ -749,3 +752,159 @@ def get_waste_summary():
 def clear_waste_summary_cache():
     """Clear cached waste summary."""
     _waste_summary_cache.pop('waste_summary', None)
+
+# Get today's critical feedbacks for admin dashboard
+def get_today_critical_feedbacks():
+    mess1_critical = []
+    mess2_critical = []
+
+    try:
+        with DatabaseManager.get_db_cursor(dictionary=True) as (cursor, connection):
+            today_date = get_fixed_time().date()
+
+            for mess, target_list in [('mess1', mess1_critical), ('mess2', mess2_critical)]:
+                cursor.execute("""
+                    SELECT detail_id, d.feedback_id, food_item, rating, comments, created_at
+                    FROM feedback_details d 
+                    JOIN feedback_summary s ON d.feedback_id = s.feedback_id
+                    WHERE DATE(created_at) = %s AND s.mess = %s
+                    ORDER BY created_at ASC
+                """, (today_date, mess))
+
+                rows = cursor.fetchall()
+
+                for row in rows:
+                    text = (row.get('comments') or '').strip()
+                    if text:
+                        classification = classify_feedback(text)
+                        if classification == "Critical":
+                            row['classification'] = classification
+                            target_list.append(row)
+
+    except Exception as e:
+        logging.error(f"Error fetching/classifying today's feedback: {e}")
+
+    logging.info(f"Found {len(mess1_critical)} critical feedbacks for mess1 today.")
+    logging.info(f"Found {len(mess2_critical)} critical feedbacks for mess2 today.")
+
+    return mess1_critical, mess2_critical
+
+def call_your_llm(prompt, api_key, model="llama-2-7b-chat", max_tokens=500, platform="groq"):
+    """
+    Calls Groq API with LLaMA model to get text completion (summary).
+
+    Args:
+        prompt (str): The input text prompt for the model.
+        api_key (str): Your Groq API key.
+        model (str): Model name, default is "llama-2-7b-chat".
+        max_tokens (int): Max tokens in response.
+
+    Returns:
+        str: Generated text from model (summary).
+    """
+    url = platform
+
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+    "max_tokens": max_tokens,
+    "temperature": 0.7,
+    "top_p": 1,
+    "n": 1,
+    "messages": [
+        {"role": "user", "content": prompt}
+    ],
+    "model": model
+    }
+
+
+    response = requests.post(url, headers=headers, json=payload)
+    if response.status_code == 200:
+        data = response.json()
+        # Assuming completion text is in choices[0].text or similar
+        return data["choices"][0]["message"]["content"].strip()
+    else:
+        raise Exception(f"Groq API error {response.status_code}: {response.text}")
+
+#Passing all critical feedbacks to the LLM for admin notification
+def get_critical_feedback_texts_for_llm():
+    mess1_feedbacks, mess2_feedbacks = get_today_critical_feedbacks()
+
+    mess_wise_feedbacks = {
+        "mess1": [],
+        "mess2": []
+    }
+
+    for fb in mess1_feedbacks:
+        comments = (fb.get('comments') or '').strip()
+        if comments:
+            mess_wise_feedbacks["mess1"].append(comments)
+
+    for fb in mess2_feedbacks:
+        comments = (fb.get('comments') or '').strip()
+        if comments:
+            mess_wise_feedbacks["mess2"].append(comments)
+
+    combined_texts = {
+        mess: "\n".join(comments) if comments else ""
+        for mess, comments in mess_wise_feedbacks.items()
+    }
+
+    logging.info(f"Mess1 feedback (first 100 chars): {combined_texts['mess1'][:100]}...")
+    logging.info(f"Mess2 feedback (first 100 chars): {combined_texts['mess2'][:100]}...")
+
+    return combined_texts
+
+def summarize_feedback_text(feedback_text):
+    # Your LLM call here — example with pseudo-code
+    # prompt = f"Summarize the following critical feedback comments given by students for the mess and suggest admin notification such that he gets all the insights from it:\n\n{feedback_text}"
+    prompt = f"""
+        You are generating a short, urgent **admin notification** based on student critical feedback.
+        Rules:
+        - Be brief and to the point (max 3–4 sentences).
+        - Use a direct, alerting tone (no over-explanation).
+        - Include only the key problem(s) without unnecessary details.
+        - Keep it under 400 characters.
+
+        Critical Feedback:
+        {feedback_text}
+    """
+
+    api_key = current_app.config.get('GROQ_API_KEY')
+    platform = current_app.config.get('GROQ_PLATFORM')
+    model = current_app.config.get('GROQ_MODEL', 'llama-3.3-70b-versatile')
+    summary = call_your_llm(prompt, api_key, model=model, max_tokens=500, platform=platform)
+    logging.info(f"Generated summary from LLM: {summary[:100]}...")  # Log first 100 chars
+    return summary
+
+MESS_NAME_MAP = {
+    "mess1": "Food Sutra",
+    "mess2": "Shakti"
+}
+
+def create_admin_notification_from_critical_feedback():
+    combined_texts = get_critical_feedback_texts_for_llm()
+
+    notifications = []
+    for mess_key, feedback_text in combined_texts.items():
+        if not feedback_text.strip():
+            logging.warning(f"No critical feedback for {MESS_NAME_MAP[mess_key]}")
+            continue
+
+        summary = summarize_feedback_text(feedback_text)
+        if not summary.strip():
+            logging.warning(f"LLM returned empty summary for {MESS_NAME_MAP[mess_key]}, using raw feedback text instead.")
+            summary = feedback_text
+
+        summary_html = markdown.markdown(summary, extensions=["nl2br"])
+
+        # Add mess name as heading in HTML
+        mess_html_section = f"<h3>{MESS_NAME_MAP[mess_key]}</h3>\n{summary_html}"
+        notifications.append(mess_html_section)
+
+    return notifications
+
+

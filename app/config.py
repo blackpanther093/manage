@@ -31,6 +31,11 @@ class Config:
     MAIL_PASSWORD = os.getenv('MAIL_PASSWORD')  # your email password or app password
     MAIL_DEFAULT_SENDER = os.getenv('MAIL_DEFAULT_SENDER', MAIL_USERNAME)
     
+    #LLM API Configuration    
+    GROQ_API_KEY = os.getenv('GROQ_API_KEY', 'your-groq-api-key')
+    GROQ_PLATFORM = os.getenv('GROQ_PLATFORM', 'https://api.groq.com/openai/v1/chat/completions')
+    GROQ_MODEL = os.getenv('GROQ_MODEL', 'gpt-4o-mini')
+    
 class DevelopmentConfig(Config):
     """Development configuration"""
     DEBUG = True

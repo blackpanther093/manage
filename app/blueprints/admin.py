@@ -3,7 +3,7 @@ Admin routes for ManageIt application
 """
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from app.models.database import DatabaseManager
-from app.utils.helpers import get_fixed_time, get_current_meal, is_odd_week, clear_notifications_cache, clear_switch_activity_cache, clear_feature_toggle_cache, get_feedback_summary, get_feedback_detail, get_payment_summary, get_waste_summary, clear_menu_cache
+from app.utils.helpers import get_fixed_time, get_current_meal, is_odd_week, clear_notifications_cache, clear_switch_activity_cache, clear_feature_toggle_cache, get_feedback_summary, get_feedback_detail, get_payment_summary, get_waste_summary, clear_menu_cache, get_notifications
 import logging
 
 admin_bp = Blueprint('admin', __name__)
@@ -352,3 +352,16 @@ def payment_summary():
     return render_template('admin/payment_summary.html', 
                          summary_data=summary_data, 
                          mess_name=mess_name)
+
+@admin_bp.route('/notifications')
+def notifications():
+    """Student notifications"""
+    redirect_response = require_admin_login()
+    if redirect_response:
+        return redirect_response
+    
+    notifications = get_notifications("admin")
+    # print(f"Notifications: {notifications}")  # Debugging line
+    return render_template("notifications.html", 
+                         notifications=notifications, 
+                         back_url='/admin/dashboard')

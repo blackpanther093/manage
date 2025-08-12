@@ -8,3 +8,7 @@ pandas==2.0.3
 Werkzeug==3.0.1
 APScheduler
 flask-compress
+scipy
+scikit-learn
+requests
+markdown

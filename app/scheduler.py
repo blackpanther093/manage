@@ -1,7 +1,8 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from app.models.database import DatabaseManager
-from app.utils.helpers import get_fixed_time
+from app.utils.helpers import get_fixed_time, create_admin_notification_from_critical_feedback, clear_notifications_cache
 import logging
+import pytz
 
 def cleanup_old_menu():
     """Delete old menu and non-veg items once a day"""
@@ -73,9 +74,40 @@ def generate_high_low_alerts():
         except Exception as e:
             logging.error(f"Error generating alerts for {mess_name}: {e}")
 
+def send_admin_notification_job(app):
+    """Scheduled job to generate and send separate admin notifications for each mess."""
+    with app.app_context():
+        try:
+            # Get dict with mess1 and mess2 summaries
+            messages = create_admin_notification_from_critical_feedback()
+
+            if not messages or not any(m.strip() for m in messages):
+                logging.info("No critical feedback to notify today.")
+                return
+
+
+            with DatabaseManager.get_db_cursor() as (cursor, connection):
+                created_at = get_fixed_time()
+
+                for message in messages:
+                    cursor.execute("""
+                        INSERT INTO notifications (message, recipient_type, created_at)
+                        VALUES (%s, %s, %s)
+                    """, (message, 'admin', created_at))
+
+                connection.commit()
+            clear_notifications_cache('admin')  # Clear cache for admin notifications
+
+        except Exception as e:
+            logging.error(f"Error sending admin notifications in scheduler: {e}")
+
 def start_scheduler(app):
+    ist = pytz.timezone("Asia/Kolkata")  # same timezone as get_fixed_time()
+
     scheduler = BackgroundScheduler()
     scheduler.add_job(func=cleanup_old_menu, trigger="cron", hour=0, minute=0)  # midnight daily
     scheduler.add_job(func=generate_high_low_alerts, trigger="interval", minutes=60)  # update alerts every 30 mins
+    # Pass app via lambda to the job to ensure app context is available
+    scheduler.add_job(func=lambda: send_admin_notification_job(app), trigger="cron", hour=23, minute=50)
     scheduler.start()
     app.logger.info("Background scheduler started")

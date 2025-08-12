@@ -262,10 +262,15 @@ def switch_mess():
             
             # Check capacity
             cursor.execute("SELECT capacity, current_capacity FROM mess_data WHERE mess = %s", (desired_mess,))
-            mess_capacity = cursor.fetchone()['capacity']
+            mess_data = cursor.fetchone()
+            if not mess_data:
+                flash(f"Mess data not found for {mess_name}.", "error")
+                return redirect(url_for('auth.profile'))
+
+            mess_capacity = mess_data['capacity']
             
             # cursor.execute("SELECT COUNT(*) AS count FROM student WHERE mess = %s", (desired_mess,))
-            mess_count = cursor.fetchone()['current_capacity']
+            mess_count = mess_data['current_capacity']
             
             if mess_count >= mess_capacity:
                 flash(f"{mess_name} has reached its maximum capacity.", "error")
