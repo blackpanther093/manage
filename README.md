@@ -1,317 +1,387 @@
-# ManageIt - Mess Management System
+# ManageIt - Comprehensive Mess Management System
 
-A comprehensive Flask-based web application for managing mess operations, student feedback, and administrative tasks in educational institutions.
+A robust, secure, and feature-rich mess management system built with Flask, designed to streamline operations for educational institutions and corporate cafeterias.
 
-## Features
+## 🌟 Features
 
-### 🏠 **Multi-Role Dashboard**
-- **Students**: Submit feedback, view menus, track payment history
-- **Mess Staff**: Manage menus, view analytics, handle payments
-- **Administrators**: System-wide control, notifications, reports
+### Multi-Role Dashboard System
+- **Students**: View menus, make payments, provide feedback, track meal history
+- **Mess Staff**: Manage menus, track waste, view feedback, handle payments
+- **Administrators**: Complete system oversight, analytics, user management
 
-### 🍽️ **Menu Management**
-- Dynamic vegetarian and non-vegetarian menu handling
-- Temporary menu overrides
-- Weekly rotation support (odd/even weeks)
-- Real-time menu updates
+### Core Functionality
+- **Menu Management**: Dynamic daily menu creation with vegetarian/non-vegetarian options
+- **Payment Processing**: Multiple payment methods with transaction tracking
+- **Feedback System**: AI-powered sentiment analysis and rating system
+- **Waste Tracking**: Environmental monitoring with waste reduction insights
+- **Real-time Notifications**: System-wide announcements and alerts
+- **Advanced Analytics**: Comprehensive reporting and data visualization
 
-### 📊 **Feedback System**
-- Star-based rating system (1-5 stars)
-- Comment collection and analysis
-- AI-powered feedback classification
-- Critical feedback alerts
-- Real-time analytics and reporting
+### Security Features
+- **Multi-layer Authentication**: Secure login with session management
+- **Rate Limiting**: Protection against brute force attacks
+- **Content Security Policy**: XSS and injection attack prevention
+- **Input Validation**: Comprehensive data sanitization
+- **Security Logging**: Detailed audit trails and monitoring
+- **HTTPS Enforcement**: SSL/TLS encryption for all communications
 
-### 💰 **Payment Tracking**
-- Non-vegetarian item payment processing
-- Payment history tracking
-- Revenue analytics
-- Multiple payment modes support
-
-### 🗑️ **Waste Management**
-- Food waste tracking by floor and meal
-- Waste vs feedback correlation analysis
-- Sustainability reporting
-- Leftover amount monitoring
-
-### 🔔 **Notification System**
-- Role-based notifications
-- System announcements
-- Real-time updates
-- Mess switch activity tracking
-
-### 🔒 **Security Features**
-- Content Security Policy (CSP) protection
-- Rate limiting on sensitive endpoints
-- Session management with security headers
-- Input validation and sanitization
-- IP blocking for suspicious activity
-- CSRF protection
-
-## Technology Stack
-
-- **Backend**: Flask (Python)
-- **Database**: MySQL with connection pooling
-- **Frontend**: HTML5, CSS3, JavaScript, Tailwind CSS
-- **Icons**: Phosphor Icons
-- **Security**: Flask-Talisman, Flask-Limiter, Flask-WTF
-- **AI Integration**: Groq API for feedback analysis
-- **Caching**: In-memory caching system
-- **Email**: SMTP integration for notifications
-
-## Installation
+## 🚀 Quick Start
 
 ### Prerequisites
-- Python 3.8+
-- MySQL 5.7+
-- pip (Python package manager)
+- Python 3.9+
+- MySQL 8.0+
+- Redis 6.0+
+- Docker & Docker Compose (recommended)
 
-### Setup Instructions
+### Installation
 
-1. **Clone the repository**
-   \`\`\`bash
-   git clone <repository-url>
-   cd manageit
-   \`\`\`
+#### Option 1: Docker Deployment (Recommended)
+\`\`\`bash
+# Clone the repository
+git clone https://github.com/yourusername/manageit.git
+cd manageit
 
-2. **Create virtual environment**
-   \`\`\`bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\\Scripts\\activate
-   \`\`\`
+# Copy and configure environment variables
+cp .env.production .env
+# Edit .env with your actual values
 
-3. **Install dependencies**
-   \`\`\`bash
-   pip install -r requirements.txt
-   \`\`\`
+# Deploy with Docker
+chmod +x deploy.sh
+./deploy.sh
+\`\`\`
 
-4. **Environment Configuration**
-   Create a \`.env\` file in the root directory:
-   \`\`\`env
-   # Database Configuration
-   DB_HOST=localhost
-   DB_USER=your_db_user
-   DB_PASSWORD=your_db_password
-   DB_NAME=mess_management
-   DB_PORT=3306
-   
-   # Security
-   SECRET_KEY=your-super-secret-key-here
-   
-   # Email Configuration
-   MAIL_SERVER=smtp.gmail.com
-   MAIL_PORT=587
-   MAIL_USE_TLS=true
-   MAIL_USERNAME=your-email@gmail.com
-   MAIL_PASSWORD=your-app-password
-   MAIL_DEFAULT_SENDER=your-email@gmail.com
-   
-   # AI Integration (Optional)
-   GROQ_API_KEY=your-groq-api-key
-   GROQ_MODEL=llama-3.3-70b-versatile
-   
-   # Environment
-   FLASK_ENV=development
-   \`\`\`
+#### Option 2: Manual Installation
+\`\`\`bash
+# Clone and setup
+git clone https://github.com/yourusername/manageit.git
+cd manageit
 
-5. **Database Setup**
-   - Create MySQL database named \`mess_management\`
-   - Import the provided SQL schema
-   - Ensure proper user permissions
+# Create virtual environment
+python3 -m venv venv
+source venv/bin/activate
 
-6. **Run the application**
-   \`\`\`bash
-   python run.py
-   \`\`\`
+# Install dependencies
+pip install -r requirements.txt
 
-7. **Access the application**
-   Open your browser and navigate to \`http://localhost:5000\`
+# Setup database
+mysql -u root -p < init.sql
 
-## Project Structure
+# Configure environment
+cp .env.production .env
+# Edit .env with your values
 
+# Run application
+export FLASK_ENV=production
+gunicorn -w 4 -b 0.0.0.0:8000 'run:create_app("production")'
+\`\`\`
+
+## 🏗️ Architecture
+
+### Technology Stack
+- **Backend**: Flask 2.3.3 with Gunicorn WSGI server
+- **Database**: MySQL 8.0 with connection pooling
+- **Caching**: Redis for session storage and rate limiting
+- **Frontend**: HTML5, CSS3, JavaScript with responsive design
+- **Security**: Flask-Talisman, Flask-WTF, Flask-Limiter
+- **Deployment**: Docker, Nginx reverse proxy, SSL/TLS
+
+### Project Structure
 \`\`\`
 manageit/
 ├── app/
 │   ├── blueprints/          # Route handlers
-│   │   ├── admin.py         # Admin routes
-│   │   ├── auth.py          # Authentication routes
-│   │   ├── main.py          # Main routes
-│   │   ├── mess.py          # Mess management routes
-│   │   └── student.py       # Student routes
-│   ├── models/              # Data models
-│   │   ├── database.py      # Database connection and queries
-│   │   └── feedback_classifier.py  # AI feedback classification
-│   ├── services/            # Business logic
-│   │   ├── email_service.py
-│   │   ├── feedback_service.py
-│   │   ├── menu_service.py
-│   │   ├── notification_service.py
-│   │   ├── payment_service.py
-│   │   ├── rating_service.py
-│   │   └── waste_service.py
-│   ├── static/              # Static files (CSS, JS, images)
-│   ├── templates/           # HTML templates
-│   └── utils/               # Utility functions
-│       ├── cache.py         # Caching system
-│       ├── security.py      # Security utilities
-│       ├── time_utils.py    # Time handling
-│       └── validators.py    # Input validation
-├── config/                  # Configuration files
-├── run.py                   # Application entry point
-├── requirements.txt         # Python dependencies
-└── README.md               # This file
+│   │   ├── auth.py         # Authentication routes
+│   │   ├── student.py      # Student dashboard
+│   │   ├── mess.py         # Mess management
+│   │   └── admin.py        # Admin panel
+│   ├── models/             # Database models
+│   ├── templates/          # Jinja2 templates
+│   ├── static/            # CSS, JS, images
+│   └── utils/             # Utility functions
+├── config.py              # Configuration management
+├── run.py                # Application factory
+├── requirements.txt      # Python dependencies
+├── Dockerfile           # Container configuration
+├── docker-compose.prod.yml # Production deployment
+├── nginx.conf          # Reverse proxy config
+└── init.sql           # Database schema
 \`\`\`
 
-## Configuration
+## ⚙️ Configuration
 
-### Security Headers
-The application implements comprehensive security headers:
-- **Content Security Policy (CSP)**: Prevents XSS attacks
-- **Strict Transport Security**: Enforces HTTPS
-- **X-Frame-Options**: Prevents clickjacking
-- **Permissions Policy**: Controls browser features
+### Environment Variables
+\`\`\`bash
+# Security
+SECRET_KEY=your-super-strong-secret-key-here
 
-### Rate Limiting
-- Authentication endpoints: 5 requests per minute
-- General endpoints: 200 requests per day, 50 per hour
-- Health check: 10 requests per minute
+# Database
+DB_HOST=your-db-host
+DB_USER=your-db-user
+DB_PASSWORD=your-db-password
+DB_NAME=mess_management_prod
 
-### Caching
-- Menu data: 1 hour TTL
-- Feedback data: 24 hours TTL
-- Rating data: 30 minutes TTL
-- Notification data: 15 minutes TTL
+# Redis
+REDIS_URL=redis://your-redis-host:6379/0
 
-## API Endpoints
+# Email
+MAIL_SERVER=smtp.your-domain.com
+MAIL_USERNAME=noreply@your-domain.com
+MAIL_PASSWORD=your-email-password
+
+# AI Integration (Optional)
+GROQ_API_KEY=your-groq-api-key
+\`\`\`
+
+### Security Configuration
+- **Rate Limiting**: 100 requests/day, 20/hour for production
+- **Session Security**: HTTPOnly, Secure, SameSite cookies
+- **CSRF Protection**: Enabled with 1-hour token lifetime
+- **Content Security Policy**: Strict policy with external resource allowlist
+- **HTTPS**: Enforced in production with HSTS headers
+
+## 📊 API Endpoints
 
 ### Authentication
-- \`POST /auth/login\` - User login
-- \`POST /auth/signup\` - User registration
-- \`GET /auth/logout\` - User logout
-- \`GET /auth/profile\` - User profile
+- `POST /auth/login` - User authentication
+- `POST /auth/signup` - User registration
+- `GET /auth/logout` - Session termination
+- `GET /auth/profile` - User profile management
 
-### Student Routes
-- \`GET /student/dashboard\` - Student dashboard
-- \`GET /student/feedback\` - Feedback form
-- \`POST /student/feedback\` - Submit feedback
-- \`GET /student/payment-history\` - Payment history
+### Student Dashboard
+- `GET /student/dashboard` - Main dashboard
+- `GET /student/menu` - Daily menu view
+- `POST /student/feedback` - Submit feedback
+- `GET /student/payments` - Payment history
 
 ### Mess Management
-- \`GET /mess/dashboard\` - Mess dashboard
-- \`GET /mess/add-non-veg-menu\` - Add non-veg items
-- \`GET /mess/payment-summary\` - Payment reports
-- \`GET /mess/waste-feedback\` - Waste analytics
+- `GET /mess/dashboard` - Mess staff dashboard
+- `POST /mess/menu` - Menu management
+- `GET /mess/feedback` - View feedback
+- `POST /mess/waste` - Waste tracking
 
-### Admin Routes
-- \`GET /admin/dashboard\` - Admin dashboard
-- \`POST /admin/toggle-mess-switch\` - Toggle mess switching
-- \`GET /admin/feedback-summary\` - System-wide feedback
-- \`GET /admin/send-notification\` - Send notifications
+### Administration
+- `GET /admin/dashboard` - Admin overview
+- `GET /admin/analytics` - System analytics
+- `POST /admin/notifications` - Send notifications
+- `GET /admin/users` - User management
 
-## Database Schema
+### System
+- `GET /health` - Application health check
+- `GET /security/status` - Security monitoring (admin only)
 
-### Key Tables
-- \`users\` - User authentication and profiles
-- \`menu\` - Regular menu items
-- \`temporary_menu\` - Temporary menu overrides
-- \`non_veg_menu_main\` - Non-vegetarian menu management
-- \`feedback_summary\` - Feedback submissions
-- \`feedback_details\` - Detailed ratings and comments
-- \`payment\` - Payment transactions
-- \`waste_summary\` - Waste tracking data
-- \`notifications\` - System notifications
+## 🗄️ Database Schema
 
-## Development
+### Core Tables
+- **users**: User accounts and authentication
+- **mess_halls**: Mess facility information
+- **menu_items**: Daily menu management
+- **payments**: Transaction records
+- **feedback**: User feedback and ratings
+- **waste_tracking**: Environmental monitoring
+- **notifications**: System announcements
+- **security_logs**: Audit trail
 
-### Running in Development Mode
+### Key Features
+- **Referential Integrity**: Foreign key constraints
+- **Performance Optimization**: Strategic indexing
+- **Data Validation**: Check constraints and triggers
+- **Audit Trail**: Comprehensive logging system
+
+## 🔧 Development
+
+### Local Development Setup
 \`\`\`bash
+# Clone repository
+git clone https://github.com/yourusername/manageit.git
+cd manageit
+
+# Setup development environment
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+# Configure development environment
 export FLASK_ENV=development
+export SECRET_KEY=dev-secret-key
+
+# Run development server
 python run.py
 \`\`\`
 
-### Code Style
-- Follow PEP 8 guidelines
-- Use type hints where applicable
-- Maintain comprehensive docstrings
-- Implement proper error handling
-
 ### Testing
 \`\`\`bash
-# Set test environment
-export FLASK_ENV=testing
-
-# Run tests (implement as needed)
+# Run tests
 python -m pytest tests/
+
+# Run with coverage
+python -m pytest --cov=app tests/
+
+# Security testing
+bandit -r app/
 \`\`\`
 
-## Deployment
+### Code Quality
+\`\`\`bash
+# Format code
+black app/
+isort app/
 
-### Production Considerations
-1. **Environment Variables**: Set \`FLASK_ENV=production\`
-2. **Database**: Use production MySQL instance
-3. **Security**: Enable HTTPS and update security headers
-4. **Monitoring**: Implement logging and monitoring
-5. **Backup**: Regular database backups
-
-### Docker Deployment (Optional)
-\`\`\`dockerfile
-FROM python:3.9-slim
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install -r requirements.txt
-COPY . .
-EXPOSE 5000
-CMD ["python", "run.py"]
+# Lint code
+flake8 app/
+pylint app/
 \`\`\`
 
-## Monitoring and Maintenance
+## 🚀 Production Deployment
 
-### Health Check
-- Endpoint: \`GET /health\`
-- Returns database connectivity status
-- Use for load balancer health checks
+### Prerequisites
+- Ubuntu 20.04+ or CentOS 8+
+- Docker & Docker Compose
+- SSL certificates (Let's Encrypt recommended)
+- Domain name with DNS configuration
 
-### Security Monitoring
-- Endpoint: \`GET /security/status\` (Admin only)
-- Monitor blocked IPs and failed attempts
-- Review security logs regularly
+### Deployment Steps
+1. **Server Setup**
+   \`\`\`bash
+   # Update system
+   sudo apt update && sudo apt upgrade -y
+   
+   # Install Docker
+   curl -fsSL https://get.docker.com -o get-docker.sh
+   sudo sh get-docker.sh
+   \`\`\`
+
+2. **Application Deployment**
+   \`\`\`bash
+   # Clone and configure
+   git clone https://github.com/yourusername/manageit.git
+   cd manageit
+   cp .env.production .env
+   # Edit .env with production values
+   
+   # Deploy
+   chmod +x deploy.sh
+   ./deploy.sh
+   \`\`\`
+
+3. **SSL Configuration**
+   \`\`\`bash
+   # Get SSL certificates
+   sudo certbot --nginx -d your-domain.com
+   \`\`\`
+
+4. **Monitoring Setup**
+   \`\`\`bash
+   # Setup monitoring
+   ./monitor.sh
+   
+   # View logs
+   docker-compose -f docker-compose.prod.yml logs -f
+   \`\`\`
 
 ### Performance Optimization
-- Database query optimization
-- Caching strategy implementation
-- Static file compression
-- CDN integration for static assets
+- **Database**: Connection pooling, query optimization
+- **Caching**: Redis for session storage and rate limiting
+- **Static Files**: Nginx serving with compression
+- **Load Balancing**: Multiple Gunicorn workers
 
-## Contributing
+## 📈 Monitoring & Maintenance
 
+### Health Monitoring
+- **Application Health**: `/health` endpoint
+- **Database Health**: Connection and query monitoring
+- **Security Monitoring**: Failed login attempts, blocked IPs
+- **Performance Metrics**: Response times, error rates
+
+### Backup Strategy
+\`\`\`bash
+# Automated database backups
+chmod +x backup.sh
+./backup.sh
+
+# Schedule regular backups
+crontab -e
+# Add: 0 2 * * * /path/to/backup.sh
+\`\`\`
+
+### Log Management
+- **Application Logs**: `/var/log/manageit/app.log`
+- **Security Logs**: Database security_logs table
+- **Access Logs**: Nginx access logs
+- **Error Logs**: Application and system error logs
+
+### Maintenance Tasks
+- **Database Optimization**: Regular ANALYZE and OPTIMIZE
+- **Log Rotation**: Automated with logrotate
+- **Security Updates**: Regular system and dependency updates
+- **Certificate Renewal**: Automated with certbot
+
+## 🔒 Security
+
+### Security Features
+- **Authentication**: Multi-factor authentication support
+- **Authorization**: Role-based access control
+- **Data Protection**: Encryption at rest and in transit
+- **Input Validation**: Comprehensive sanitization
+- **Rate Limiting**: DDoS and brute force protection
+- **Security Headers**: HSTS, CSP, X-Frame-Options
+- **Audit Logging**: Comprehensive security event logging
+
+### Security Best Practices
+- Regular security audits and penetration testing
+- Dependency vulnerability scanning
+- Security header validation
+- SSL/TLS configuration testing
+- Database security hardening
+
+## 🤝 Contributing
+
+### Development Workflow
 1. Fork the repository
-2. Create a feature branch (\`git checkout -b feature/amazing-feature\`)
-3. Commit your changes (\`git commit -m 'Add amazing feature'\`)
-4. Push to the branch (\`git push origin feature/amazing-feature\`)
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## License
+### Code Standards
+- Follow PEP 8 style guidelines
+- Write comprehensive tests
+- Document all functions and classes
+- Use type hints where appropriate
+- Maintain security best practices
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+### Issue Reporting
+- Use GitHub Issues for bug reports
+- Include detailed reproduction steps
+- Provide system information and logs
+- Follow the issue template
 
-## Support
+## 📄 License
 
-For support and questions:
-- Create an issue in the repository
-- Contact the development team
-- Check the documentation for common solutions
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Changelog
+## 🆘 Support
 
-### Version 1.0.0
-- Initial release with core functionality
-- Multi-role dashboard system
-- Feedback and rating system
-- Payment tracking
-- Waste management
-- Security implementation
+### Documentation
+- [API Documentation](docs/api.md)
+- [Deployment Guide](docs/deployment.md)
+- [Security Guide](docs/security.md)
+- [Troubleshooting](docs/troubleshooting.md)
+
+### Community
+- **GitHub Issues**: Bug reports and feature requests
+- **Discussions**: Community support and questions
+- **Wiki**: Additional documentation and guides
+
+### Professional Support
+For enterprise support, custom development, or consulting services, contact: support@manageit.com
+
+## 🙏 Acknowledgments
+
+- Flask community for the excellent web framework
+- Security researchers for vulnerability disclosures
+- Contributors and beta testers
+- Open source libraries and tools used in this project
 
 ---
 
-**ManageIt** - Streamlining mess management for educational institutions.
-\`\`\`
+**ManageIt** - Streamlining mess management with security, efficiency, and user experience at its core.

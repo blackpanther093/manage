@@ -2,14 +2,18 @@
 Enhanced Flask application factory with comprehensive security
 """
 import os
+import sys
 import time
 import base64
+import logging
+from logging.handlers import RotatingFileHandler
 from flask import Flask, request, session, g
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_wtf.csrf import CSRFProtect
 from flask_talisman import Talisman
 
+from app import create_app
 from app.config import config
 from app.models.database import init_db_pool, DatabaseManager
 from app.utils.logging_config import setup_logging, log_security_event
@@ -31,13 +35,16 @@ def create_app(config_name='default'):
     # Load configuration
     app.config.from_object(config[config_name])
     
-    # Setup logging first
-    setup_logging(app)
+    # Setup production logging
+    if config_name == 'production':
+        setup_production_logging(app)
+    else:
+        setup_logging(app)
     
     # Initialize security extensions
     csrf = CSRFProtect(app)
     
-    # Initialize rate limiter
+    # Initialize rate limiter with Redis for production
     limiter = Limiter(
         app=app,
         key_func=get_remote_address,
@@ -47,7 +54,7 @@ def create_app(config_name='default'):
     
     # Security headers with Talisman
     Talisman(app, 
-             force_https=not app.config.get('DEBUG', False),
+             force_https=(config_name == 'production'),  # Force HTTPS in production
              strict_transport_security=True,
              permissions_policy={},  # Disable automatic permissions policy
              content_security_policy=False)  # We'll handle CSP manually
@@ -87,8 +94,8 @@ def create_app(config_name='default'):
         for header, value in app.config.get('SECURITY_HEADERS', {}).items():
             response.headers[header] = value
         
-        # Log failed requests
-        if response.status_code >= 400:
+        # Log failed requests in production
+        if response.status_code >= 400 and config_name == 'production':
             log_security_event('failed_request', {
                 'status_code': response.status_code,
                 'endpoint': request.endpoint,
@@ -183,14 +190,49 @@ def create_app(config_name='default'):
         """Template filter to sanitize HTML"""
         return InputValidator.sanitize_html(str(text))
     
-    app.logger.info("Flask application created with enhanced security features")
+    app.logger.info(f"Flask application created with {config_name} configuration")
     
     return app
 
+
+def setup_production_logging(app):
+    """Setup production logging with file rotation"""
+    if not app.debug and not app.testing:
+        # Create logs directory if it doesn't exist
+        log_dir = os.path.dirname(app.config.get('LOG_FILE', '/var/log/manageit/app.log'))
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir, exist_ok=True)
+        
+        # Setup rotating file handler
+        file_handler = RotatingFileHandler(
+            app.config.get('LOG_FILE', '/var/log/manageit/app.log'),
+            maxBytes=app.config.get('LOG_MAX_BYTES', 10 * 1024 * 1024),
+            backupCount=app.config.get('LOG_BACKUP_COUNT', 5)
+        )
+        
+        file_handler.setFormatter(logging.Formatter(
+            '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+        ))
+        
+        file_handler.setLevel(getattr(logging, app.config.get('LOG_LEVEL', 'INFO')))
+        app.logger.addHandler(file_handler)
+        app.logger.setLevel(getattr(logging, app.config.get('LOG_LEVEL', 'INFO')))
+        app.logger.info('ManageIt startup - Production mode')
+
+
 if __name__ == '__main__':
-    app = create_app(os.getenv('FLASK_ENV', 'development'))
-    app.run(
-        host='0.0.0.0',
-        port=int(os.getenv('PORT', 5000)),
-        debug=app.config.get('DEBUG', False)
-    )
+    # Get environment from environment variable
+    env = os.getenv('FLASK_ENV', 'development')
+    app = create_app(env)
+    
+    if env == 'production':
+        # Production should use a proper WSGI server like Gunicorn
+        print("WARNING: Use a production WSGI server like Gunicorn for production deployment")
+        print("Example: gunicorn -w 4 -b 0.0.0.0:8000 'run:create_app(\"production\")'")
+        sys.exit(1)
+    else:
+        app.run(
+            host='0.0.0.0',
+            port=int(os.getenv('PORT', 5000)),
+            debug=app.config.get('DEBUG', False)
+        )

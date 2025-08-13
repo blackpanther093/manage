@@ -59,13 +59,13 @@ class Config:
     GROQ_PLATFORM = os.getenv('GROQ_PLATFORM', 'https://api.groq.com/openai/v1/chat/completions')
     GROQ_MODEL = os.getenv('GROQ_MODEL', 'llama-3.3-70b-versatile')
     
-    # Rate Limiting
-    RATELIMIT_STORAGE_URL = os.getenv('REDIS_URL', 'memory://')
+    # Rate Limiting - Production Redis
+    RATELIMIT_STORAGE_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
     RATELIMIT_DEFAULT = "200 per day, 50 per hour"
     
     # Security Headers
     SECURITY_HEADERS = {
-        'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+        'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
         'X-Content-Type-Options': 'nosniff',
         'X-Frame-Options': 'DENY',
         'X-XSS-Protection': '1; mode=block',
@@ -96,24 +96,72 @@ class Config:
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
     UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')
     ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
+    
+    # Logging Configuration
+    LOG_LEVEL = 'INFO'
+    LOG_FILE = os.getenv('LOG_FILE', '/var/log/manageit/app.log')
+    LOG_MAX_BYTES = 10 * 1024 * 1024  # 10MB
+    LOG_BACKUP_COUNT = 5
 
 class DevelopmentConfig(Config):
     """Development configuration"""
     DEBUG = True
     SESSION_COOKIE_SECURE = False  # Allow HTTP in development
     WTF_CSRF_ENABLED = False  # Disable CSRF in development for easier testing
+    RATELIMIT_STORAGE_URL = 'memory://'  # Use memory for development
+    LOG_LEVEL = 'DEBUG'
 
 class ProductionConfig(Config):
-    """Production configuration"""
+    """Production configuration with enhanced security"""
     DEBUG = False
+    TESTING = False
     
     # Enhanced security for production
     SESSION_COOKIE_SECURE = True
     SESSION_COOKIE_HTTPONLY = True
     WTF_CSRF_ENABLED = True
     
-    # Logging
-    LOG_LEVEL = 'INFO'
+    # Production logging
+    LOG_LEVEL = 'WARNING'
+    
+    # Production rate limiting - stricter
+    RATELIMIT_DEFAULT = "100 per day, 20 per hour"
+    
+    # Production database with connection pooling
+    DB_POOL_SIZE = int(os.getenv('DB_POOL_SIZE', '10'))
+    DB_POOL_TIMEOUT = int(os.getenv('DB_POOL_TIMEOUT', '30'))
+    DB_POOL_RECYCLE = int(os.getenv('DB_POOL_RECYCLE', '3600'))
+    
+    # Production security headers - stricter CSP
+    SECURITY_HEADERS = {
+        'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'DENY',
+        'X-XSS-Protection': '1; mode=block',
+        'Referrer-Policy': 'strict-origin-when-cross-origin',
+        'Permissions-Policy': (
+            'geolocation=(), '
+            'microphone=(), '
+            'camera=(), '
+            'payment=(), '
+            'usb=(), '
+            'magnetometer=(), '
+            'gyroscope=(), '
+            'fullscreen=(self), '
+            'sync-xhr=()'
+        ),
+        "Content-Security-Policy": (
+            "default-src 'self'; "
+            "style-src 'self' 'unsafe-inline' https://unpkg.com https://fonts.googleapis.com; "
+            "style-src-elem 'self' 'unsafe-inline' https://unpkg.com https://fonts.googleapis.com; "
+            "font-src 'self' https://unpkg.com https://fonts.gstatic.com; "
+            "script-src 'self' 'unsafe-inline' https://unpkg.com; "
+            "script-src-elem 'self' 'unsafe-inline' https://unpkg.com; "
+            "img-src 'self' data: https:; "
+            "connect-src 'self'; "
+            "upgrade-insecure-requests;"
+        )
+    }
 
 class TestingConfig(Config):
     """Testing configuration"""
@@ -121,6 +169,7 @@ class TestingConfig(Config):
     WTF_CSRF_ENABLED = False
     DB_NAME = 'test_mess_management'
     SESSION_COOKIE_SECURE = False
+    RATELIMIT_STORAGE_URL = 'memory://'
 
 # Configuration dictionary
 config = {
