@@ -99,7 +99,8 @@ class Config:
     
     # Logging Configuration
     LOG_LEVEL = 'INFO'
-    LOG_FILE = os.getenv('LOG_FILE', '/var/log/manageit/app.log')
+    # LOG_FILE = os.getenv('LOG_FILE', '/var/log/manageit/app.log')
+    LOG_FILE = os.getenv('LOG_FILE', 'logs/app.log')
     LOG_MAX_BYTES = 10 * 1024 * 1024  # 10MB
     LOG_BACKUP_COUNT = 5
 
