@@ -12,3 +12,7 @@ scipy
 scikit-learn
 requests
 markdown
+bleach
+flask-limiter
+flask-wtf
+flask-talisman
