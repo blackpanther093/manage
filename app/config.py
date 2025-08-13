@@ -153,11 +153,11 @@ class ProductionConfig(Config):
         ),
         "Content-Security-Policy": (
             "default-src 'self'; "
-            "style-src 'self' 'unsafe-inline' https://unpkg.com https://fonts.googleapis.com; "
-            "style-src-elem 'self' 'unsafe-inline' https://unpkg.com https://fonts.googleapis.com; "
-            "font-src 'self' https://unpkg.com https://fonts.gstatic.com; "
-            "script-src 'self' 'unsafe-inline' https://unpkg.com; "
-            "script-src-elem 'self' 'unsafe-inline' https://unpkg.com; "
+            "style-src 'self' 'unsafe-inline' https://unpkg.com https://fonts.googleapis.com https://cdn.jsdelivr.net; "
+            "style-src-elem 'self' 'unsafe-inline' https://unpkg.com https://fonts.googleapis.com https://cdn.jsdelivr.net; "
+            "font-src 'self' https://unpkg.com https://fonts.gstatic.com https://cdn.jsdelivr.net; "
+            "script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net; "
+            "script-src-elem 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net; "
             "img-src 'self' data: https:; "
             "connect-src 'self'; "
             "upgrade-insecure-requests;"

@@ -219,7 +219,7 @@ def setup_production_logging(app):
         app.logger.setLevel(getattr(logging, app.config.get('LOG_LEVEL', 'INFO')))
         app.logger.info('ManageIt startup - Production mode')
 
-env = os.getenv('FLASK_ENV', 'production')  # default to production on Render
+env = os.getenv('FLASK_CONFIG', 'production')  # default to production on Render
 app = create_app(env)  # using the factory you defined in this file
 
 if __name__ == '__main__':

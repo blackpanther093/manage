@@ -22,6 +22,7 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
+*.zip
 
 # Virtual environment folders (add your venv folder name here)
 venv/
@@ -37,6 +38,7 @@ Pipfile.lock
 .env
 
 # Logs
+logs/
 *.log
 
 # Unit test / coverage reports
