@@ -13,7 +13,7 @@ from flask_limiter.util import get_remote_address
 from flask_wtf.csrf import CSRFProtect
 from flask_talisman import Talisman
 
-from app import create_app
+# from app import create_app
 from app.config import config
 from app.models.database import init_db_pool, DatabaseManager
 from app.utils.logging_config import setup_logging, log_security_event
@@ -219,17 +219,19 @@ def setup_production_logging(app):
         app.logger.setLevel(getattr(logging, app.config.get('LOG_LEVEL', 'INFO')))
         app.logger.info('ManageIt startup - Production mode')
 
+env = os.getenv('FLASK_ENV', 'production')  # default to production on Render
+app = create_app(env)  # using the factory you defined in this file
 
 if __name__ == '__main__':
     # Get environment from environment variable
-    env = os.getenv('FLASK_ENV', 'development')
-    app = create_app(env)
+    # env = os.getenv('FLASK_ENV', 'development')
+    # app = create_app(env)
     
     if env == 'production':
         # Production should use a proper WSGI server like Gunicorn
         print("WARNING: Use a production WSGI server like Gunicorn for production deployment")
         print("Example: gunicorn -w 4 -b 0.0.0.0:8000 'run:create_app(\"production\")'")
-        sys.exit(1)
+        # sys.exit(1)
     else:
         app.run(
             host='0.0.0.0',
