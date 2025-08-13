@@ -24,7 +24,7 @@ def create_app(config_class=Config):
     def add_cache_headers(response):
         # Cache all GET responses for 1 day
         if response.status_code == 200 and 'Cache-Control' not in response.headers:
-            response.headers['Cache-Control'] = 'public, max-age=86400'
+            response.headers['Cache-Control'] = 'public, max-age=7200'
         return response
 
     # Register Blueprints
