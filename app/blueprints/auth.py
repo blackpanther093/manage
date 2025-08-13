@@ -6,6 +6,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from werkzeug.security import check_password_hash, generate_password_hash
 from app.models.database import DatabaseManager
 from app.utils.helpers import send_confirmation_email
+from app.utils.security import security_manager  # Added security manager import
 import logging
 
 auth_bp = Blueprint('auth', __name__)
@@ -30,6 +31,10 @@ def login():
             flash("Please enter both ID and password.", 'error')
             return render_template('auth/login.html')
         
+        if security_manager.is_device_blocked(user_id):
+            flash("Access denied. Too many failed attempts.", 'error')
+            return render_template('auth/login.html')
+        
         try:
             with DatabaseManager.get_db_cursor() as (cursor, connection):
                 # Check student
@@ -37,6 +42,12 @@ def login():
                 student = cursor.fetchone()
                 
                 if student and check_password_hash(student[3], password):
+                    security_manager.clear_failed_attempts(user_id)
+                    security_manager.create_session(user_id, 'student', {
+                        'student_name': student[1],
+                        'mess': student[2]
+                    })
+                    
                     session.update({
                         'student_id': student[0],
                         'student_name': student[1],
@@ -50,6 +61,11 @@ def login():
                 mess_official = cursor.fetchone()
                 
                 if mess_official and check_password_hash(mess_official[2], password):
+                    security_manager.clear_failed_attempts(user_id)
+                    security_manager.create_session(user_id, 'mess_official', {
+                        'mess': mess_official[1]
+                    })
+                    
                     session.update({
                         'mess_id': mess_official[0],
                         'mess': mess_official[1],
@@ -62,6 +78,11 @@ def login():
                 admin = cursor.fetchone()
                 
                 if admin and check_password_hash(admin[2], password):
+                    security_manager.clear_failed_attempts(user_id)
+                    security_manager.create_session(user_id, 'admin', {
+                        'admin_name': admin[1]
+                    })
+                    
                     session.update({
                         'admin_id': admin[0],
                         'admin_name': admin[1],
@@ -69,6 +90,7 @@ def login():
                     })
                     return redirect(url_for('admin.dashboard'))
                 
+                security_manager.record_failed_login(user_id)
                 flash("Invalid ID or Password.", 'error')
                 
         except Exception as e:
@@ -169,16 +191,10 @@ def confirm_email(token):
 
             connection.commit()
 
-        # flash("Your account has been confirmed! You can now log in.", 'success')
-        # return redirect(url_for('auth.login'))
-
-        # Set session directly so user is logged in
-        # MESS_OPTIONS = {
-        #     "food_sutra": "mess1",
-        #     "sheila": "mess2"
-        # }
-
-        # assigned_mess = MESS_OPTIONS[assigned_mess] if assigned_mess in MESS_OPTIONS else assigned_mess
+        security_manager.create_session(student_id, 'student', {
+            'student_name': data['name'],
+            'mess': assigned_mess
+        })
 
         session.update({
             'student_id': student_id,
@@ -198,6 +214,7 @@ def confirm_email(token):
 @auth_bp.route('/logout')
 def logout():
     """User logout handler"""
+    security_manager.invalidate_session()
     session.clear()
     flash("You have been logged out successfully.", 'success')
     return redirect(url_for('main.home'))
@@ -267,12 +284,12 @@ def update_password():
                 connection.commit()
                 
             flash("Password updated successfully!", 'success')
-            return redirect(url_for('auth.profile'))  # ✅ Ends execution here
+            return redirect(url_for('auth.profile'))  # Ends execution here
             
         except Exception as e:
             logging.error(f"Password update error: {e}")
             flash("An error occurred while updating password.", 'error')
-            return render_template('auth/update_password.html')  # ✅ Return immediately here
+            return render_template('auth/update_password.html')  # Return immediately here
 
     return render_template('auth/update_password.html')
 

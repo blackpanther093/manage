@@ -44,10 +44,17 @@ def create_app(config_name='default'):
     # Initialize security extensions
     csrf = CSRFProtect(app)
     
-    # Initialize rate limiter with Redis for production
+    def get_device_key():
+        """Get device-specific key for rate limiting"""
+        ip = security_manager.get_client_ip()
+        device_id = security_manager.get_device_fingerprint()
+        user_id = session.get('user_id', 'anonymous')
+        return f"{user_id}:{ip}:{device_id}"
+
+    # Initialize rate limiter with device-based keys
     limiter = Limiter(
         app=app,
-        key_func=get_remote_address,
+        key_func=get_device_key,  # Use device key instead of IP
         default_limits=[app.config.get('RATELIMIT_DEFAULT', "200 per day, 50 per hour")],
         storage_uri=app.config.get('RATELIMIT_STORAGE_URL', 'memory://')
     )
@@ -67,9 +74,13 @@ def create_app(config_name='default'):
     @app.before_request
     def security_before_request():
         """Security checks before each request"""
-        if security_manager.is_device_blocked():
+        identifier = session.get('user_id', '')
+        if security_manager.is_device_blocked(identifier):
             client_ip = security_manager.get_client_ip()
-            log_security_event('blocked_device_access_attempt', {'ip': client_ip}, 'WARNING')
+            log_security_event('blocked_device_access_attempt', {
+                'ip': client_ip,
+                'device_id': security_manager.get_device_fingerprint()[:8]  # Log partial device ID
+            }, 'WARNING')
             return "Access denied", 403
         
         # Validate session
@@ -168,12 +179,8 @@ def create_app(config_name='default'):
         if session.get('role') != 'admin':
             return "Unauthorized", 401
         
-        return {
-            'blocked_devices': len(security_manager.blocked_devices),
-            'failed_attempts': len(security_manager.failed_attempts),
-            'email_rate_limits': len(security_manager.email_attempts)
-        }
-    
+        return security_manager.get_security_stats()
+
     # Apply rate limiting to authentication endpoints
     limiter.limit("5 per minute")(auth_bp)
     
