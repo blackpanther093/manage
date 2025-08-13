@@ -67,10 +67,9 @@ def create_app(config_name='default'):
     @app.before_request
     def security_before_request():
         """Security checks before each request"""
-        # Check if IP is blocked
-        client_ip = security_manager.get_client_ip()
-        if security_manager.is_ip_blocked(client_ip):
-            log_security_event('blocked_ip_access_attempt', {'ip': client_ip}, 'WARNING')
+        if security_manager.is_device_blocked():
+            client_ip = security_manager.get_client_ip()
+            log_security_event('blocked_device_access_attempt', {'ip': client_ip}, 'WARNING')
             return "Access denied", 403
         
         # Validate session
@@ -81,6 +80,7 @@ def create_app(config_name='default'):
         
         # Log security-relevant requests
         if request.endpoint in ['auth.login', 'auth.signup', 'admin.dashboard']:
+            client_ip = security_manager.get_client_ip()
             log_security_event('security_endpoint_access', {
                 'endpoint': request.endpoint,
                 'ip': client_ip,
@@ -169,7 +169,7 @@ def create_app(config_name='default'):
             return "Unauthorized", 401
         
         return {
-            'blocked_ips': len(security_manager.blocked_ips),
+            'blocked_devices': len(security_manager.blocked_devices),
             'failed_attempts': len(security_manager.failed_attempts),
             'email_rate_limits': len(security_manager.email_attempts)
         }
