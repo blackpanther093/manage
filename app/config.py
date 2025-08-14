@@ -117,10 +117,11 @@ class ProductionConfig(Config):
     DEBUG = False
     TESTING = False
     
-    # Enhanced security for production
     SESSION_COOKIE_SECURE = True
     SESSION_COOKIE_HTTPONLY = True
     WTF_CSRF_ENABLED = True
+    
+    PREFERRED_URL_SCHEME = 'https'
     
     # Production logging
     LOG_LEVEL = 'WARNING'
