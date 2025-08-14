@@ -2,7 +2,7 @@
 Authentication routes for ManageIt application
 """
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash, current_app, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, current_app
 from werkzeug.security import check_password_hash, generate_password_hash
 from app.models.database import DatabaseManager
 from app.utils.helpers import send_confirmation_email
@@ -24,31 +24,18 @@ def login():
         return redirect(url_for('admin.dashboard'))
     
     if request.method == 'POST':
+        user_id = request.form.get('id', '').strip()
+        password = request.form.get('password', '').strip()
+        
+        if not user_id or not password:
+            flash("Please enter both ID and password.", 'error')
+            return render_template('auth/login.html')
+        
+        if security_manager.is_device_blocked(user_id):
+            flash("Access denied. Too many failed attempts.", 'error')
+            return render_template('auth/login.html')
+        
         try:
-            if request.is_json:
-                data = request.get_json()
-                user_id = data.get('id', '').strip() if data else ''
-                password = data.get('password', '').strip() if data else ''
-            else:
-                user_id = request.form.get('id', '').strip()
-                password = request.form.get('password', '').strip()
-            
-            if not user_id or not password:
-                current_app.logger.warning(f"Login attempt with missing credentials from IP: {request.remote_addr}")
-                if request.is_json:
-                    return jsonify({'error': 'Please enter both ID and password.'}), 400
-                flash("Please enter both ID and password.", 'error')
-                return render_template('auth/login.html')
-            
-            if security_manager.is_device_blocked(user_id):
-                current_app.logger.warning(f"Blocked device login attempt for user: {user_id}")
-                if request.is_json:
-                    return jsonify({'error': 'Access denied. Too many failed attempts.'}), 403
-                flash("Access denied. Too many failed attempts.", 'error')
-                return render_template('auth/login.html')
-            
-            current_app.logger.info(f"Login attempt for user: {user_id}")
-            
             with DatabaseManager.get_db_cursor() as (cursor, connection):
                 # Check student
                 cursor.execute("SELECT s_id, name, mess, password FROM student WHERE BINARY s_id = %s", (user_id,))
@@ -67,9 +54,6 @@ def login():
                         'mess': student[2],
                         'role': 'student'
                     })
-                    current_app.logger.info(f"Successful student login: {user_id}")
-                    if request.is_json:
-                        return jsonify({'success': True, 'redirect': url_for('student.dashboard')})
                     return redirect(url_for('student.dashboard'))
                 
                 # Check mess official
@@ -87,9 +71,6 @@ def login():
                         'mess': mess_official[1],
                         'role': 'mess_official'
                     })
-                    current_app.logger.info(f"Successful mess official login: {user_id}")
-                    if request.is_json:
-                        return jsonify({'success': True, 'redirect': url_for('mess.dashboard')})
                     return redirect(url_for('mess.dashboard'))
                 
                 # Check admin
@@ -107,48 +88,16 @@ def login():
                         'admin_name': admin[1],
                         'role': 'admin'
                     })
-                    current_app.logger.info(f"Successful admin login: {user_id}")
-                    if request.is_json:
-                        return jsonify({'success': True, 'redirect': url_for('admin.dashboard')})
                     return redirect(url_for('admin.dashboard'))
                 
                 security_manager.record_failed_login(user_id)
-                current_app.logger.warning(f"Failed login attempt for user: {user_id}")
-                if request.is_json:
-                    return jsonify({'error': 'Invalid ID or Password.'}), 401
                 flash("Invalid ID or Password.", 'error')
                 
         except Exception as e:
-            current_app.logger.error(f"Login error for user {user_id if 'user_id' in locals() else 'unknown'}: {str(e)}", exc_info=True)
-            if request.is_json:
-                return jsonify({'error': 'An error occurred during login. Please try again.'}), 500
+            logging.error(f"Login error: {e}")
             flash("An error occurred during login. Please try again.", 'error')
     
-    try:
-        return render_template('auth/login.html')
-    except Exception as e:
-        current_app.logger.error(f"Template rendering error: {str(e)}")
-        # Return a simple HTML form if template is missing
-        return '''
-        <!DOCTYPE html>
-        <html>
-        <head><title>Login - ManageIt</title></head>
-        <body>
-            <h2>Login</h2>
-            <form method="POST">
-                <div>
-                    <label>ID:</label>
-                    <input type="text" name="id" required>
-                </div>
-                <div>
-                    <label>Password:</label>
-                    <input type="password" name="password" required>
-                </div>
-                <button type="submit">Login</button>
-            </form>
-        </body>
-        </html>
-        '''
+    return render_template('auth/login.html')
 
 @auth_bp.route('/signup', methods=['GET', 'POST'])
 def signup():

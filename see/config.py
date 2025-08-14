@@ -16,13 +16,13 @@ class Config:
         raise ValueError("SECRET_KEY environment variable is required")
     
     # Session Configuration
-    SESSION_COOKIE_SECURE = False
+    SESSION_COOKIE_SECURE = True
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
     PERMANENT_SESSION_LIFETIME = 14400  # 4 hours
     
     # CSRF Protection
-    WTF_CSRF_ENABLED = False # Disable CSRF for now to fix login issues
+    WTF_CSRF_ENABLED = True
     WTF_CSRF_TIME_LIMIT = 3600  # 1 hour
     
     # Database Configuration with SSL
@@ -117,37 +117,51 @@ class ProductionConfig(Config):
     DEBUG = False
     TESTING = False
     
-    SESSION_COOKIE_SECURE = os.getenv('SESSION_COOKIE_SECURE', 'false').lower() == 'true'  # Default to false for Render
+    SESSION_COOKIE_SECURE = True
     SESSION_COOKIE_HTTPONLY = True
-    WTF_CSRF_ENABLED = False  # Disable CSRF temporarily to fix login
+    WTF_CSRF_ENABLED = True
     
     PREFERRED_URL_SCHEME = 'https'
     
     # Production logging
     LOG_LEVEL = 'WARNING'
     
-    RATELIMIT_DEFAULT = "500 per day, 100 per hour"  # More lenient limits
+    # Production rate limiting - stricter
+    RATELIMIT_DEFAULT = "100 per day, 20 per hour"
     
     # Production database with connection pooling
     DB_POOL_SIZE = int(os.getenv('DB_POOL_SIZE', '10'))
     DB_POOL_TIMEOUT = int(os.getenv('DB_POOL_TIMEOUT', '30'))
     DB_POOL_RECYCLE = int(os.getenv('DB_POOL_RECYCLE', '3600'))
     
+    # Production security headers - stricter CSP
     SECURITY_HEADERS = {
+        'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
         'X-Content-Type-Options': 'nosniff',
-        'X-Frame-Options': 'SAMEORIGIN',
+        'X-Frame-Options': 'DENY',
+        'X-XSS-Protection': '1; mode=block',
         'Referrer-Policy': 'strict-origin-when-cross-origin',
+        'Permissions-Policy': (
+            'geolocation=(), '
+            'microphone=(), '
+            'camera=(), '
+            'payment=(), '
+            'usb=(), '
+            'magnetometer=(), '
+            'gyroscope=(), '
+            'fullscreen=(self), '
+            'sync-xhr=()'
+        ),
         "Content-Security-Policy": (
             "default-src 'self'; "
-            "style-src 'self' 'unsafe-inline' https://unpkg.com https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
-            "style-src-elem 'self' 'unsafe-inline' https://unpkg.com https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
-            "font-src 'self' https://unpkg.com https://fonts.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
-            "script-src-elem 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
-            "img-src 'self' data: https: blob:; "
-            "connect-src 'self' https:; "
-            "object-src 'none'; "
-            "base-uri 'self';"
+            "style-src 'self' 'unsafe-inline' https://unpkg.com https://fonts.googleapis.com https://cdn.jsdelivr.net; "
+            "style-src-elem 'self' 'unsafe-inline' https://unpkg.com https://fonts.googleapis.com https://cdn.jsdelivr.net; "
+            "font-src 'self' https://unpkg.com https://fonts.gstatic.com https://cdn.jsdelivr.net; "
+            "script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net; "
+            "script-src-elem 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net; "
+            "img-src 'self' data: https:; "
+            "connect-src 'self'; "
+            "upgrade-insecure-requests;"
         )
     }
 
