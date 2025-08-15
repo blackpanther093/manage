@@ -46,7 +46,7 @@ class MenuService:
             with DatabaseManager.get_db_cursor() as (cursor, connection):
                 # Get veg menu (temporary or default)
                 cursor.execute("""
-                    SELECT food_item FROM temporary_menu
+                    SELECT distinct food_item FROM temporary_menu
                     WHERE week_type = %s AND day = %s AND meal = %s
                 """, (week_type, day, meal))
                 temp_menu = cursor.fetchall()
@@ -54,7 +54,7 @@ class MenuService:
 
                 if not veg_menu_items:
                     cursor.execute("""
-                        SELECT food_item FROM menu
+                        SELECT distinct food_item FROM menu
                         WHERE week_type = %s AND day = %s AND meal = %s
                     """, (week_type, day, meal))
                     veg_menu_items = [item[0] for item in cursor.fetchall()]
@@ -85,7 +85,7 @@ class MenuService:
         try:
             with DatabaseManager.get_db_cursor() as (cursor, connection):
                 cursor.execute("""
-                    SELECT food_item, MIN(cost)
+                    SELECT distinct food_item, MIN(cost)
                     FROM non_veg_menu_items
                     JOIN non_veg_menu_main 
                     ON non_veg_menu_items.menu_id = non_veg_menu_main.menu_id

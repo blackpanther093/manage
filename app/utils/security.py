@@ -291,6 +291,23 @@ class SecurityManager:
             if current_time - v['created_at'] < 86400
         }
 
+    def record_email_sent(self, email: str):
+        """Manually record an email send (after successful send)."""
+        current_time = time.time()
+        if email in self.email_attempts:
+            self.email_attempts[email]['count'] += 1
+            self.email_attempts[email]['last_attempt'] = current_time
+        else:
+            self.email_attempts[email] = {
+                'count': 1,
+                'first_attempt': current_time,
+                'last_attempt': current_time
+            }
+
+    def hash_sensitive_data(self, data: str) -> str:
+        """Return hashed version of sensitive data (e.g., for logging)."""
+        return hashlib.sha256(data.encode()).hexdigest()[:10]
+
     def get_security_stats(self) -> Dict:
         """Get current security statistics"""
         return {
@@ -299,6 +316,7 @@ class SecurityManager:
             'email_rate_limits': len(self.email_attempts),
             'active_sessions': len(self.session_tokens)
         }
+
 
 # Global security manager instance
 security_manager = SecurityManager()

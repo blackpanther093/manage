@@ -197,7 +197,7 @@ def signup():
 def confirm_email(token):
     serializer = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
     try:
-        data = serializer.loads(token, max_age=120)  # 2 min expiry
+        data = serializer.loads(token, max_age=600)  # 2 min expiry
     except SignatureExpired:
         flash("The confirmation link has expired.", 'error')
         return redirect(url_for('auth.signup'))

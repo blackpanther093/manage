@@ -13,12 +13,20 @@
     <link rel="shortcut icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
     <meta name="theme-color" content="#ffffff">
 
-    <link rel="icon" sizes="192x192" href="{{ url_for('static', filename='images/android-chrome-192x192.png') }}">
-    <link rel="icon" sizes="512x512" href="{{ url_for('static', filename='images/android-chrome-512x512.png') }}">
+    <!-- <link rel="icon" sizes="192x192" href="{{ url_for('static', filename='images/android-chrome-192x192.png') }}">
+    <link rel="icon" sizes="512x512" href="{{ url_for('static', filename='images/android-chrome-512x512.png') }}"> -->
 
     <!-- <script src="https://cdn.tailwindcss.com"></script> -->
     <link href="{{ url_for('static', filename='css/output.css') }}" rel="stylesheet">
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- <link rel="preload" href="{{ url_for('static', filename='css/output.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}"></noscript> -->
+    
+    <!-- <link rel="preload" href="{{ url_for('static', filename='css/output.css') }}" as="style">
+    <link id="css-stylesheet" rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}"></noscript> -->
+
+    <script src="https://unpkg.com/@phosphor-icons/web" defer></script>
+    <!-- <link href="{{ url_for('static', filename='css/phosphor.css') }}" rel="stylesheet"> -->
     <!-- <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"> -->
         
     <style>
@@ -28,6 +36,15 @@
             -moz-osx-font-smoothing: grayscale;
         }
         
+        h1 {
+            font-size: 2rem; /* or whatever fits your design */
+        }
+
+        header {
+            background: #fff;
+            padding: 1rem;
+        }
+
         .glass-effect {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(20px);

@@ -118,7 +118,7 @@ class FeedbackService:
 
                 for mess, target_list in [('mess1', mess1_critical), ('mess2', mess2_critical)]:
                     cursor.execute("""
-                        SELECT detail_id, d.feedback_id, food_item, rating, comments, created_at
+                        SELECT detail_id, d.feedback_id, food_item, rating, comments, meal, created_at
                         FROM feedback_details d 
                         JOIN feedback_summary s ON d.feedback_id = s.feedback_id
                         WHERE DATE(created_at) = %s AND s.mess = %s
@@ -129,10 +129,12 @@ class FeedbackService:
 
                     for row in rows:
                         text = (row.get('comments') or '').strip()
+                        food_item = row.get('food_item') or ''
+                        meal = row.get('meal') or ''
                         if text:
                             classification = classify_feedback(text)
                             if classification == "Critical":
-                                row['classification'] = classification
+                                feedback_text = f"Meal: {meal}\tFood Item: {food_item}\tComment: {text}"
                                 target_list.append(row)
 
         except Exception as e:

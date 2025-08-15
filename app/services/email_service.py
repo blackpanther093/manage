@@ -14,7 +14,8 @@ class EmailService:
     def send_confirmation_email(cls, recipient_email: str, token: str) -> bool:
         """Send account confirmation email with token link"""
         # Check rate limiting
-        if not security_manager.can_send_email(recipient_email):
+        # if not security_manager.can_send_email(recipient_email):
+        if security_manager.rate_limit_email(recipient_email):
             logging.warning(f"Email rate limit exceeded for {recipient_email}")
             return False
         
@@ -57,7 +58,8 @@ ManageIt Team"""
     def send_password_reset_email(cls, recipient_email: str, token: str) -> bool:
         """Send password reset email"""
         # Check rate limiting
-        if not security_manager.can_send_email(recipient_email):
+        # if not security_manager.can_send_email(recipient_email):
+        if security_manager.rate_limit_email(recipient_email):
             logging.warning(f"Email rate limit exceeded for {recipient_email}")
             return False
         
