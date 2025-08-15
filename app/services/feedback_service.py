@@ -17,9 +17,11 @@ class FeedbackService:
     def get_feedback_summary(cls, mess_name: str) -> List[Tuple]:
         """Fetch feedback summary with caching"""
         cache_key = f"feedback_summary_{mess_name}"
-        cache = cache_manager.get_cache('feedback_summary')
+        # cache = cache_manager.get_cache('feedback_summary')
+        # cached_data = cache.get(cache_key, cls.CACHE_TTL)
+        cache = cache_manager.feedback_cache
         cached_data = cache.get(cache_key, cls.CACHE_TTL)
-        
+
         if cached_data is not None:
             return cached_data
         
@@ -49,7 +51,7 @@ class FeedbackService:
     def get_feedback_detail(cls, feedback_date: str, meal: str, mess_name: str) -> List[Tuple]:
         """Fetch feedback details with caching"""
         cache_key = f"feedback_detail_{feedback_date}_{meal}_{mess_name}"
-        cache = cache_manager.get_cache('feedback_detail')
+        cache = cache_manager.feedback_cache
         cached_data = cache.get(cache_key, cls.CACHE_TTL)
         
         if cached_data is not None:

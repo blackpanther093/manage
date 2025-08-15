@@ -108,6 +108,6 @@ def start_scheduler(app):
     scheduler.add_job(func=cleanup_old_menu, trigger="cron", hour=0, minute=0)  # midnight daily
     scheduler.add_job(func=generate_high_low_alerts, trigger="interval", minutes=60)  # update alerts every 30 mins
     # Pass app via lambda to the job to ensure app context is available
-    scheduler.add_job(func=lambda: send_admin_notification_job(app), trigger="cron", hour=23, minute=10)
+    scheduler.add_job(func=lambda: send_admin_notification_job(app), trigger="cron", hour=23, minute=50)
     scheduler.start()
     app.logger.info("Background scheduler started")
