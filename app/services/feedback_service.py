@@ -134,8 +134,8 @@ class FeedbackService:
                         if text:
                             classification = classify_feedback(text)
                             if classification == "Critical":
-                                feedback_text = f"Meal: {meal}\tFood Item: {food_item}\tComment: {text}"
-                                target_list.append(row)
+                                feedback_text = f"Meal: {meal}\tFood Item: {food_item}\tComment: {text}\n"
+                                target_list.append(feedback_text)
 
         except Exception as e:
             logging.error(f"Error fetching/classifying today's feedback: {e}")
