@@ -6,13 +6,13 @@ A robust, secure, and feature-rich mess management system built with Flask, desi
 
 ### Multi-Role Dashboard System
 - **Students**: View menus, make payments, provide feedback, track meal history
-- **Mess Staff**: Manage menus, track waste, view feedback, handle payments
+- **Mess Staff**: Manage menus, track waste, handle student activity, handle payments
 - **Administrators**: Complete system oversight, analytics, user management
 
 ### Core Functionality
 - **Menu Management**: Dynamic daily menu creation with vegetarian/non-vegetarian options
 - **Payment Processing**: Multiple payment methods with transaction tracking
-- **Feedback System**: AI-powered sentiment analysis and rating system
+- **Feedback System**: AI-powered sentiment analysis using 'SGDC' model and rating system
 - **Waste Tracking**: Environmental monitoring with waste reduction insights
 - **Real-time Notifications**: System-wide announcements and alerts
 - **Advanced Analytics**: Comprehensive reporting and data visualization
@@ -35,29 +35,32 @@ A robust, secure, and feature-rich mess management system built with Flask, desi
 
 ### Installation
 
-#### Option 1: Docker Deployment (Recommended)
+## Option 1: Docker Deployment (Recommended)
 \`\`\`bash
 # Clone the repository
 git clone https://github.com/yourusername/manageit.git
+
 cd manageit
 
-# Copy and configure environment variables
-cp .env.production .env
-# Edit .env with your actual values
+<!-- # Copy and configure environment variables
+cp .env.production .env -->
+<!-- # Edit .env with your actual values -->
 
 # Deploy with Docker
 chmod +x deploy.sh
 ./deploy.sh
 \`\`\`
 
-#### Option 2: Manual Installation
+## Option 2: Manual Installation
 \`\`\`bash
 # Clone and setup
-git clone https://github.com/yourusername/manageit.git
+git clone https://github.com/blackpanther093/manage
+
 cd manageit
 
 # Create virtual environment
 python3 -m venv venv
+
 source venv/bin/activate
 
 # Install dependencies
@@ -86,27 +89,55 @@ gunicorn -w 4 -b 0.0.0.0:8000 'run:create_app("production")'
 - **Deployment**: Docker, Nginx reverse proxy, SSL/TLS
 
 ### Project Structure
-\`\`\`
-manageit/
+<pre>
 ├── app/
-│   ├── blueprints/          # Route handlers
-│   │   ├── auth.py         # Authentication routes
-│   │   ├── student.py      # Student dashboard
-│   │   ├── mess.py         # Mess management
-│   │   └── admin.py        # Admin panel
-│   ├── models/             # Database models
-│   ├── templates/          # Jinja2 templates
-│   ├── static/            # CSS, JS, images
-│   └── utils/             # Utility functions
-├── config.py              # Configuration management
-├── run.py                # Application factory
-├── requirements.txt      # Python dependencies
-├── Dockerfile           # Container configuration
-├── docker-compose.prod.yml # Production deployment
-├── nginx.conf          # Reverse proxy config
-└── init.sql           # Database schema
-\`\`\`
-
+│   ├── __init__.py
+│   ├── blueprints/
+│   │   ├── __init__.py
+│   │   ├── admin.py
+│   │   ├── auth.py
+│   │   ├── main.py
+│   │   ├── mess.py
+│   │   ├── student.py
+│   ├── config.py
+│   ├── models/
+│   │   ├── data/
+│   │   ├── database.py
+│   │   ├── feedback_classifier.py
+│   ├── scheduler.py
+│   ├── services/
+│   │   ├── __init__.py
+│   │   ├── email_service.py
+│   │   ├── feedback_service.py
+│   │   ├── llm_service.py
+│   │   ├── menu_service.py
+│   │   ├── notification_service.py
+│   │   ├── payment_service.py
+│   │   ├── rating_service.py
+│   │   ├── waste_service.py
+│   ├── static/
+│   │   ├── css/
+│   │   ├── images/
+│   │   ├── src/
+│   ├── templates/
+│   │   ├── admin/
+│   │   ├── auth/
+│   │   ├── mess/
+│   │   ├── student/
+│   ├── utils/
+│   │   ├── __init__.py
+│   │   ├── cache.py
+│   │   ├── helpers.py
+│   │   ├── logging_config.py
+│   │   ├── security.py
+│   │   ├── time_utils.py
+│   │   ├── validators.py
+├── docker-compose.prod.yml
+├── init.sql
+├── nginx.conf
+├── requirements.txt
+├── run.py
+</pre>
 ## ⚙️ Configuration
 
 ### Environment Variables
@@ -116,8 +147,11 @@ SECRET_KEY=your-super-strong-secret-key-here
 
 # Database
 DB_HOST=your-db-host
+
 DB_USER=your-db-user
+
 DB_PASSWORD=your-db-password
+
 DB_NAME=mess_management_prod
 
 # Redis
@@ -125,7 +159,9 @@ REDIS_URL=redis://your-redis-host:6379/0
 
 # Email
 MAIL_SERVER=smtp.your-domain.com
-MAIL_USERNAME=noreply@your-domain.com
+
+MAIL_USERNAME=username/mail-id
+
 MAIL_PASSWORD=your-email-password
 
 # AI Integration (Optional)
@@ -149,21 +185,23 @@ GROQ_API_KEY=your-groq-api-key
 
 ### Student Dashboard
 - `GET /student/dashboard` - Main dashboard
-- `GET /student/menu` - Daily menu view
+- `GET /student/add-non-veg-menu` - Daily non-veg menu update
 - `POST /student/feedback` - Submit feedback
 - `GET /student/payments` - Payment history
 
 ### Mess Management
 - `GET /mess/dashboard` - Mess staff dashboard
-- `POST /mess/menu` - Menu management
-- `GET /mess/feedback` - View feedback
-- `POST /mess/waste` - Waste tracking
+- `POST /mess/add-non-veg-menu` - Add special menu for today
+- `POST mess/add-payment` - Add payments for students
+- `POST mess/switch-activity` - Review students who changed mess
+- `POST /mess/review-waste-feedback` - Review Waste feedback submitted
 
 ### Administration
 - `GET /admin/dashboard` - Admin overview
-- `GET /admin/analytics` - System analytics
-- `POST /admin/notifications` - Send notifications
-- `GET /admin/users` - User management
+- `GET /admin/waste-summary` - Waste analytics
+- `POST /admin/send-notification` - Send notifications
+- `POST /admin/update-veg-menu` - Update menu
+- `POST /admin/feedback-summary` - View feedback
 
 ### System
 - `GET /health` - Application health check
@@ -172,14 +210,12 @@ GROQ_API_KEY=your-groq-api-key
 ## 🗄️ Database Schema
 
 ### Core Tables
-- **users**: User accounts and authentication
-- **mess_halls**: Mess facility information
-- **menu_items**: Daily menu management
+- **students**: Student accounts and authentication
+- **menu**: Daily menu management
 - **payments**: Transaction records
-- **feedback**: User feedback and ratings
-- **waste_tracking**: Environmental monitoring
+- **feedback_summary**: User feedback and ratings
+- **waste_summary**: Environmental monitoring
 - **notifications**: System announcements
-- **security_logs**: Audit trail
 
 ### Key Features
 - **Referential Integrity**: Foreign key constraints
@@ -192,44 +228,26 @@ GROQ_API_KEY=your-groq-api-key
 ### Local Development Setup
 \`\`\`bash
 # Clone repository
-git clone https://github.com/yourusername/manageit.git
-cd manageit
+git clone https://github.com/blackpanther093/manage
+
+cd manage
 
 # Setup development environment
 python3 -m venv venv
+
 source venv/bin/activate
+
 pip install -r requirements.txt
 
 # Configure development environment
 export FLASK_ENV=development
+
 export SECRET_KEY=dev-secret-key
 
 # Run development server
 python run.py
 \`\`\`
 
-### Testing
-\`\`\`bash
-# Run tests
-python -m pytest tests/
-
-# Run with coverage
-python -m pytest --cov=app tests/
-
-# Security testing
-bandit -r app/
-\`\`\`
-
-### Code Quality
-\`\`\`bash
-# Format code
-black app/
-isort app/
-
-# Lint code
-flake8 app/
-pylint app/
-\`\`\`
 
 ## 🚀 Production Deployment
 
@@ -241,6 +259,7 @@ pylint app/
 
 ### Deployment Steps
 1. **Server Setup**
+
    \`\`\`bash
    # Update system
    sudo apt update && sudo apt upgrade -y
@@ -253,8 +272,10 @@ pylint app/
 2. **Application Deployment**
    \`\`\`bash
    # Clone and configure
-   git clone https://github.com/yourusername/manageit.git
-   cd manageit
+   git clone https://github.com/blackpanther093/manage
+
+   cd manage
+   
    cp .env.production .env
    # Edit .env with production values
    
@@ -304,7 +325,7 @@ crontab -e
 \`\`\`
 
 ### Log Management
-- **Application Logs**: `/var/log/manageit/app.log`
+- **Application Logs**: `/var/log/manage/app.log`
 - **Security Logs**: Database security_logs table
 - **Access Logs**: Nginx access logs
 - **Error Logs**: Application and system error logs
@@ -360,20 +381,6 @@ crontab -e
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🆘 Support
-
-### Documentation
-- [API Documentation](docs/api.md)
-- [Deployment Guide](docs/deployment.md)
-- [Security Guide](docs/security.md)
-- [Troubleshooting](docs/troubleshooting.md)
-
-### Community
-- **GitHub Issues**: Bug reports and feature requests
-- **Discussions**: Community support and questions
-- **Wiki**: Additional documentation and guides
-
-### Professional Support
-For enterprise support, custom development, or consulting services, contact: support@manageit.com
 
 ## 🙏 Acknowledgments
 
