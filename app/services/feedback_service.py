@@ -7,7 +7,7 @@ from app.models.database import DatabaseManager
 from app.models.feedback_classifier import classify_feedback
 from app.utils.time_utils import TimeUtils
 from app.utils.cache import cache_manager
-from app.utils.helpers import get_current_meal
+# from app.utils.helpers import get_current_meal
 class FeedbackService:
     """Service class for feedback operations"""
     
@@ -111,7 +111,7 @@ class FeedbackService:
     @classmethod
     def get_today_critical_feedbacks(cls) -> Tuple[List[Dict], List[Dict]]:
         """Get today's critical feedbacks for both messes"""
-        meal = get_current_meal()
+        meal = TimeUtils.get_current_meal
         mess1_critical = []
         mess2_critical = []
 
