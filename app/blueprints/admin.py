@@ -4,6 +4,7 @@ Admin routes for ManageIt application
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from app.models.database import DatabaseManager
 from app.utils.helpers import get_fixed_time, get_current_meal, is_odd_week, clear_notifications_cache, clear_switch_activity_cache, clear_feature_toggle_cache, get_feedback_summary, get_feedback_detail, get_payment_summary, get_waste_summary, clear_menu_cache, get_notifications
+from app.services.notification_service import NotificationService
 import logging
 
 admin_bp = Blueprint('admin', __name__)
@@ -140,19 +141,14 @@ def send_notification():
             flash("Invalid input!", "error")
             return redirect(url_for('admin.dashboard'))
         
-        try:
-            with DatabaseManager.get_db_cursor() as (cursor, connection):
-                created_at = get_fixed_time()
-                cursor.execute("""
-                    INSERT INTO notifications (message, recipient_type, created_at) 
-                    VALUES (%s, %s, %s)
-                """, (message, recipient_type, created_at))
-                connection.commit()
-                flash("Notification sent successfully!", "success")
-            clear_notifications_cache(recipient_type)
+        success = NotificationService.send_notification(
+            message=message,
+            recipient_type=recipient_type
+        )
 
-        except Exception as e:
-            logging.error(f"Send notification error: {e}")
+        if success:
+            flash("Notification sent successfully!", "success")
+        else:
             flash("Error sending notification.", "error")
     
     return render_template('admin/send_notification.html')

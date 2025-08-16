@@ -5,6 +5,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from app.models.database import DatabaseManager
 from app.utils.helpers import get_fixed_time, get_current_meal, get_menu, is_odd_week, get_notifications, get_monthly_avg_ratings_cached, get_leaderboard_cached, get_non_veg_menu, get_feature_toggle_status, clear_feedback_summary_cache, clear_feedback_detail_cache
 from app.services.feedback_service import FeedbackService  # Import the class containing submit_feedback
+from app.services.payment_service import PaymentService
 import logging
 
 student_bp = Blueprint('student', __name__)
@@ -195,16 +196,7 @@ def payment_history():
     mess_name = session['mess']
     
     try:
-        with DatabaseManager.get_db_cursor() as (cursor, connection):
-            created_at = get_fixed_time().date()
-            cursor.execute("""
-                SELECT mess, payment_date, meal, food_item, amount
-                FROM payment
-                WHERE payment_date >= %s - INTERVAL 30 DAY
-                AND s_id = %s
-                ORDER BY payment_date DESC
-            """, (created_at, student_id))
-            data = cursor.fetchall()
+        data = PaymentService.get_student_payment_history(student_id, days=30)
             
     except Exception as e:
         logging.error(f"Payment history error: {e}")

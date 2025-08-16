@@ -115,6 +115,12 @@ def send_admin_notification_job(app):
         except Exception as e:
             logging.error(f"Error sending admin notifications in scheduler: {e}")
 
+def schedule_admin_notification(app, meal):
+    def job():
+        logging.info(f"Running admin notification job for {meal}")
+        send_admin_notification_job(app)
+    return job
+
 def start_scheduler(app):
     ist = pytz.timezone("Asia/Kolkata")  # same timezone as get_fixed_time()
 
@@ -140,14 +146,15 @@ def start_scheduler(app):
             trigger_hour = (trigger_hour - 1) % 24
             trigger_minute += 60
 
+        job = schedule_admin_notification(app, meal)
         scheduler.add_job(
-            func=lambda m=meal: send_admin_notification_job(app),
+            func=job,
             trigger="cron",
             hour=trigger_hour,
             minute=trigger_minute,
-            timezone=ist,
             id=f"notify_{meal}"
         )
+
         logging.info(f"Scheduled admin notification for {meal} at {trigger_hour:02d}:{trigger_minute:02d} IST")
 
     logging.info("Scheduler jobs added.")

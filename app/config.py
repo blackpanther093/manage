@@ -22,7 +22,7 @@ class Config:
     PERMANENT_SESSION_LIFETIME = 14400  # 4 hours
     
     # CSRF Protection
-    WTF_CSRF_ENABLED = False # Disable CSRF for now to fix login issues
+    WTF_CSRF_ENABLED = True # Disable CSRF for now to fix login issues
     WTF_CSRF_TIME_LIMIT = 3600  # 1 hour
     
     # Database Configuration with SSL
@@ -108,7 +108,8 @@ class DevelopmentConfig(Config):
     """Development configuration"""
     DEBUG = True
     SESSION_COOKIE_SECURE = False  # Allow HTTP in development
-    WTF_CSRF_ENABLED = False  # Disable CSRF in development for easier testing
+    # WTF_CSRF_ENABLED = False  # Disable CSRF in development for easier testing
+    WTF_CSRF_ENABLED = True  # Disable CSRF in development for easier testing
     RATELIMIT_STORAGE_URL = 'memory://'  # Use memory for development
     LOG_LEVEL = 'DEBUG'
 
@@ -117,9 +118,10 @@ class ProductionConfig(Config):
     DEBUG = False
     TESTING = False
     
-    SESSION_COOKIE_SECURE = os.getenv('SESSION_COOKIE_SECURE', 'false').lower() == 'true'  # Default to false for Render
+    SESSION_COOKIE_SECURE = os.getenv('SESSION_COOKIE_SECURE', 'true').lower() == 'true'  # Default to false for Render
     SESSION_COOKIE_HTTPONLY = True
-    WTF_CSRF_ENABLED = False  # Disable CSRF temporarily to fix login
+    # WTF_CSRF_ENABLED = False  # Disable CSRF temporarily to fix login
+    WTF_CSRF_ENABLED = True  # Disable CSRF temporarily to fix login
     
     PREFERRED_URL_SCHEME = 'https'
     

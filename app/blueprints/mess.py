@@ -5,6 +5,8 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from app.models.database import DatabaseManager
 from app.utils.helpers import get_fixed_time, get_current_meal, get_menu, is_odd_week, get_notifications, clear_non_veg_menu_cache, get_non_veg_menu, get_amount_data, get_payment_summary, clear_payment_summary_cache, get_waste_feedback, clear_waste_feedback_cache, get_switch_activity, clear_waste_summary_cache
 from app.scheduler import high_low_alerts_cache
+from app.services.waste_service import WasteService
+from app.services.payment_service import PaymentService  # Make sure this is imported
 import pandas as pd
 import plotly.express as px
 import logging
@@ -170,10 +172,8 @@ def waste_feedback():
     non_veg_menu1 = get_non_veg_menu("mess1")
     non_veg_menu2 = get_non_veg_menu("mess2")
 
-    # Check meal availability
     if ((meal == 'Breakfast' and current_hour < 9) or 
         (meal == 'Lunch' and current_hour < 14) or 
-        # (meal == 'Lunch' and current_hour < 13) or #testing 
         (meal == 'Snacks' and current_hour < 18) or 
         (meal == 'Dinner' and current_hour < 21)):
         meal = None
@@ -182,7 +182,6 @@ def waste_feedback():
         flash("No meal available at the moment.", 'error')
         return redirect(url_for('mess.dashboard'))
     
-    # Filter veg items
     exclusions = {'salt', 'sugar', 'ghee', 'podi', 'coffee', 'bbj', 'sprouts', 'curd', 'papad', 'rasam', 'fryums', 'milk', 'tea'}
     veg_items = [
         item for item in veg_menu_items 
@@ -201,7 +200,6 @@ def waste_feedback():
         prepared_amounts = {}
         leftover_amounts = {}
         
-        # Determine menu based on floor
         if floor in ['Ground', 'First']:
             menu_items = veg_items + [item[0] for item in non_veg_menu1]
         else:
@@ -223,44 +221,26 @@ def waste_feedback():
             flash("No valid data submitted.", 'error')
             return redirect(url_for('mess.waste_feedback'))
         
-        try:
-            with DatabaseManager.get_db_cursor() as (cursor, connection):
-                created_at = get_fixed_time().date()
-                
-                # Check for existing data
-                cursor.execute("""
-                    SELECT COUNT(*) FROM waste_summary 
-                    WHERE waste_date = %s AND meal = %s AND floor = %s
-                """, (created_at, meal, floor))
-                count = cursor.fetchone()[0]
-                
-                if count > 0:
-                    flash("Waste data already submitted for today.", 'error')
-                    return redirect(url_for('mess.waste_feedback'))
-                
-                # Insert waste summary
-                cursor.execute("""
-                    INSERT INTO waste_summary (waste_date, meal, floor, total_waste)
-                    VALUES (%s, %s, %s, %s)
-                """, (created_at, meal, floor, waste_amount))
-                waste_id = cursor.lastrowid
-                
-                # Insert waste details
-                for food_item in prepared_amounts:
-                    cursor.execute("""
-                        INSERT INTO waste_details (waste_id, food_item, prepared_amount, leftover_amount)
-                        VALUES (%s, %s, %s, %s)
-                    """, (waste_id, food_item, prepared_amounts[food_item], leftover_amounts[food_item]))
-                
-                connection.commit()
-                flash("Waste data submitted successfully!", 'success')
-                clear_waste_feedback_cache(mess)
-                clear_waste_summary_cache()
-                return redirect(url_for('mess.dashboard'))
-                
-        except Exception as e:
-            logging.error(f"Waste feedback error: {e}")
-            flash("An error occurred while submitting waste data.", 'error')
+        created_at = get_fixed_time().date()
+
+        # ✅ Use WasteService instead of manual DB code
+        success = WasteService.submit_waste_data(
+            waste_date=created_at,
+            meal=meal,
+            floor=floor,
+            total_waste=waste_amount,
+            prepared_amounts=prepared_amounts,
+            leftover_amounts=leftover_amounts
+        )
+
+        if success:
+            flash("Waste data submitted successfully!", 'success')
+            # clear_waste_feedback_cache(mess)
+            # clear_waste_summary_cache()
+            return redirect(url_for('mess.dashboard'))
+        else:
+            flash("Waste data already submitted for today or an error occurred.", 'error')
+            return redirect(url_for('mess.dashboard'))
     
     return render_template('mess/waste_feedback.html', 
                          meal=meal, 
@@ -291,6 +271,7 @@ def add_payment():
         
         # Get food item cost
         amount_data = get_amount_data(food_item, mess_name, created_at, meal)
+        
         try:
             with DatabaseManager.get_db_cursor() as (cursor, connection):
                 # Validate student
@@ -306,16 +287,24 @@ def add_payment():
                     return redirect(url_for('mess.add_payment'))
                 
                 item_id, amount = amount_data
-                
-                # Insert payment
-                cursor.execute("""
-                    INSERT INTO payment (s_id, mess, meal, payment_date, food_item, amount, payment_mode, item_id)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                """, (s_id, mess_name, meal, created_at, food_item, amount, payment_mode, item_id))
-                
-                connection.commit()
+
+            # ✅ Use PaymentService to insert payment
+            success = PaymentService.add_payment(
+                s_id=s_id,
+                mess=mess_name,
+                meal=meal,
+                payment_date=created_at,
+                food_item=food_item,
+                amount=amount,
+                payment_mode=payment_mode,
+                item_id=item_id
+            )
+
+            if success:
                 flash("Payment details entered successfully!", "success")
-                clear_payment_summary_cache(mess_name)
+                # clear_payment_summary_cache(mess_name)
+            # else:
+            #     flash("An error occurred while adding the payment.", "error")
 
         except Exception as e:
             logging.error(f"Add payment error: {e}")
@@ -324,19 +313,7 @@ def add_payment():
         return redirect(url_for('mess.add_payment'))
     
     # Get available food items
-    food_items = []
-    try:
-        with DatabaseManager.get_db_cursor() as (cursor, connection):
-            cursor.execute("""
-                SELECT n.food_item, n.cost
-                FROM non_veg_menu_items n
-                JOIN non_veg_menu_main m ON n.menu_id = m.menu_id
-                WHERE m.menu_date = %s AND m.meal = %s AND m.mess = %s
-            """, (created_at, meal, mess_name))
-            food_items = cursor.fetchall()
-            
-    except Exception as e:
-        logging.error(f"Get food items error: {e}")
+    food_items = get_non_veg_menu(mess_name)
     
     return render_template('mess/add_payment.html', 
                          food_items=food_items, 

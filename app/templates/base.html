@@ -260,5 +260,21 @@
     </script>
     
     {% block extra_js %}{% endblock %}
+
+    <!-- Auto-inject CSRF token into all forms -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('form').forEach(form => {
+                // Avoid duplicates
+                if (!form.querySelector('input[name="csrf_token"]')) {
+                    const csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = 'csrf_token';
+                    csrfInput.value = "{{ csrf_token() }}";
+                    form.appendChild(csrfInput);
+                }
+            });
+        });
+    </script>
 </body>
 </html>
