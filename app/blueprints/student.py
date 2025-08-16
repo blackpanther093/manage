@@ -4,6 +4,7 @@ Student routes for ManageIt application
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from app.models.database import DatabaseManager
 from app.utils.helpers import get_fixed_time, get_current_meal, get_menu, is_odd_week, get_notifications, get_monthly_avg_ratings_cached, get_leaderboard_cached, get_non_veg_menu, get_feature_toggle_status, clear_feedback_summary_cache, clear_feedback_detail_cache
+from app.services.feedback_service import FeedbackService  # Import the class containing submit_feedback
 import logging
 
 student_bp = Blueprint('student', __name__)
@@ -103,7 +104,7 @@ def feedback():
         
         with DatabaseManager.get_db_cursor() as (cursor, connection):
             # Check if feedback already given
-            cursor.execute("""
+            cursor.execute(""" 
                 SELECT DISTINCT s_id FROM feedback_summary 
                 WHERE s_id = %s AND feedback_date = %s AND mess = %s AND meal = %s
             """, (student_id, created_at, mess, meal))
@@ -132,44 +133,39 @@ def feedback():
         
         if request.method == 'POST':
             try:
-                with DatabaseManager.get_db_cursor() as (cursor, connection):
-                    # Collect ratings and comments
-                    food_ratings = {}
-                    comments = {}
-                    non_veg_menu = non_veg_menu1 if mess == 'mess1' else non_veg_menu2
-                    menu_items = veg_items + non_veg_menu
-                    
-                    for item in menu_items:
-                        rating = request.form.get(f'rating_{item}')
-                        comment = request.form.get(f'comment_{item}')
-                        if rating:
-                            food_ratings[item] = int(rating)
-                            comments[item] = comment or None
-                    
-                    if not food_ratings:
-                        flash("No ratings submitted. Please provide at least one rating.", "error")
-                        return redirect(url_for('student.feedback'))
-                    
-                    # Insert feedback
-                    cursor.execute("""
-                        INSERT INTO feedback_summary (s_id, feedback_date, meal, mess)
-                        VALUES (%s, %s, %s, %s)
-                    """, (student_id, created_at, meal, mess))
-                    feedback_id = cursor.lastrowid
-                    
-                    # Insert feedback details
-                    for item, rating in food_ratings.items():
-                        food_item = item[0] if isinstance(item, tuple) else item
-                        cursor.execute("""
-                            INSERT INTO feedback_details (feedback_id, food_item, rating, comments)
-                            VALUES (%s, %s, %s, %s)
-                        """, (feedback_id, food_item, rating, comments.get(item)))
-                    
-                    connection.commit()
+                # Collect ratings and comments
+                food_ratings = {}
+                comments = {}
+                non_veg_menu = non_veg_menu1 if mess == 'mess1' else non_veg_menu2
+                menu_items = veg_items + non_veg_menu
+                
+                for item in menu_items:
+                    rating = request.form.get(f'rating_{item}')
+                    comment = request.form.get(f'comment_{item}')
+                    if rating:
+                        food_ratings[item] = int(rating)
+                        comments[item] = comment or None
+                
+                if not food_ratings:
+                    flash("No ratings submitted. Please provide at least one rating.", "error")
+                    return redirect(url_for('student.feedback'))
+                
+                # Call the submit_feedback class method
+                feedback_success = FeedbackService.submit_feedback(
+                    student_id=student_id,
+                    feedback_date=created_at,
+                    meal=meal,
+                    mess=mess,
+                    food_ratings=food_ratings,
+                    comments=comments
+                )
+                
+                if feedback_success:
                     flash("Feedback submitted successfully!", "success")
-                    clear_feedback_summary_cache(mess)
-                    clear_feedback_detail_cache(created_at, meal, mess)
                     return redirect(url_for('student.dashboard'))
+                else:
+                    flash("An error occurred while submitting feedback.", "error")
+                    return redirect(url_for('student.feedback'))
                     
             except Exception as e:
                 logging.error(f"Feedback submission error: {e}")

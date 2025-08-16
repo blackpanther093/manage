@@ -7,7 +7,7 @@ from app.models.database import DatabaseManager
 from app.models.feedback_classifier import classify_feedback
 from app.utils.time_utils import TimeUtils
 from app.utils.cache import cache_manager
-
+from app.utils.helpers import get_current_meal
 class FeedbackService:
     """Service class for feedback operations"""
     
@@ -111,6 +111,7 @@ class FeedbackService:
     @classmethod
     def get_today_critical_feedbacks(cls) -> Tuple[List[Dict], List[Dict]]:
         """Get today's critical feedbacks for both messes"""
+        meal = get_current_meal()
         mess1_critical = []
         mess2_critical = []
 
@@ -120,12 +121,12 @@ class FeedbackService:
 
                 for mess, target_list in [('mess1', mess1_critical), ('mess2', mess2_critical)]:
                     cursor.execute("""
-                        SELECT detail_id, d.feedback_id, food_item, rating, comments, meal, created_at
+                        SELECT detail_id, d.feedback_id, food_item, rating, comments, created_at
                         FROM feedback_details d 
                         JOIN feedback_summary s ON d.feedback_id = s.feedback_id
-                        WHERE DATE(created_at) = %s AND s.mess = %s
+                        WHERE DATE(created_at) = %s AND s.mess = %s AND meal = %s
                         ORDER BY created_at ASC
-                    """, (today_date, mess))
+                    """, (today_date, mess, meal))
 
                     rows = cursor.fetchall()
 
@@ -136,8 +137,13 @@ class FeedbackService:
                         if text:
                             classification = classify_feedback(text)
                             if classification == "Critical":
-                                feedback_text = f"Meal: {meal}\tFood Item: {food_item}\tComment: {text}\n"
-                                target_list.append(feedback_text)
+                                # feedback_text = f"Meal: {meal}\tFood Item: {food_item}\tComment: {text}\n"
+                                # target_list.append(feedback_text)
+                                target_list.append({
+                                    'comments': text,
+                                    'food_item': food_item,
+                                    'meal': meal
+                                })
 
         except Exception as e:
             logging.error(f"Error fetching/classifying today's feedback: {e}")

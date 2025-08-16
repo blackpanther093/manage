@@ -6,9 +6,11 @@ import pytz
 
 def cleanup_old_menu():
     """Delete old menu and non-veg items once a day"""
+    logging.info("Starting cleanup_old_menu job...")
     try:
         with DatabaseManager.get_db_cursor() as (cursor, connection):
             current_date = get_fixed_time().date()
+            logging.info(f"Cleaning up data older than: {current_date}")
 
             cursor.execute("DELETE FROM temporary_menu WHERE created_at < %s", (current_date,))
             cursor.execute("""
@@ -29,16 +31,20 @@ high_low_alerts_cache = {}  # { "mess1": [...], "mess2": [...] }
 
 def generate_high_low_alerts():
     """Generate high waste and low feedback alerts for each mess."""
+    logging.info("Starting generate_high_low_alerts job...")
     mess_list = ["mess1", "mess2"]
 
     for mess_name in mess_list:
         alerts = []
+        logging.info(f"Processing alerts for {mess_name}...")
         try:
             with DatabaseManager.get_db_cursor() as (cursor, connection):
                 created_at = get_fixed_time().date()
+                logging.info(f"Generated at: {created_at}")
 
                 # High waste warnings
                 floors = ['Ground', 'First'] if mess_name == 'mess1' else ['Second', 'Third']
+                logging.info(f"Checking floors: {floors}")
                 cursor.execute("""
                     SELECT floor, SUM(total_waste) as total_waste, waste_date 
                     FROM waste_summary 
@@ -48,10 +54,12 @@ def generate_high_low_alerts():
                     HAVING SUM(total_waste) > 50
                     ORDER BY waste_date DESC
                 """, (created_at, floors[0], floors[1]))
+
                 for floor, waste, date in cursor.fetchall():
                     alerts.append(
                         (f"⚠️ High waste recorded on {floor} Floor with {waste} Kg.", date)
                     )
+                    logging.info(f"High waste recorded on {floor} Floor with {waste} Kg on {date}")
 
                 # Low feedback alerts
                 cursor.execute("""
@@ -63,11 +71,13 @@ def generate_high_low_alerts():
                     HAVING AVG(d.rating) < 3.0
                     ORDER BY s.feedback_date DESC
                 """, (mess_name, created_at))
+
                 for rating, meal, date in cursor.fetchall():
                     alerts.append(
                         (f"❗ Low feedback detected for {meal} on {date} "
                          f"with Avg. Rating {round(rating, 2)}", date)
                     )
+                    logging.info(f"Low feedback detected for {meal} on {date} with Avg. Rating {round(rating, 2)}")
 
             high_low_alerts_cache[mess_name] = alerts
             logging.info(f"✅ Alerts generated for {mess_name}: {len(alerts)} items")
@@ -76,6 +86,7 @@ def generate_high_low_alerts():
 
 def send_admin_notification_job(app):
     """Scheduled job to generate and send separate admin notifications for each mess."""
+    logging.info("Starting send_admin_notification_job...")
     with app.app_context():
         try:
             # Get dict with mess1 and mess2 summaries
@@ -85,6 +96,7 @@ def send_admin_notification_job(app):
                 logging.info("No critical feedback to notify today.")
                 return
 
+            logging.info(f"Sending {len(messages)} critical feedback notifications...")
 
             with DatabaseManager.get_db_cursor() as (cursor, connection):
                 created_at = get_fixed_time()
@@ -96,7 +108,9 @@ def send_admin_notification_job(app):
                     """, (message, 'admin', created_at))
 
                 connection.commit()
+
             clear_notifications_cache('admin')  # Clear cache for admin notifications
+            logging.info("✅ Admin notifications sent and cache cleared.")
 
         except Exception as e:
             logging.error(f"Error sending admin notifications in scheduler: {e}")
@@ -104,10 +118,41 @@ def send_admin_notification_job(app):
 def start_scheduler(app):
     ist = pytz.timezone("Asia/Kolkata")  # same timezone as get_fixed_time()
 
-    scheduler = BackgroundScheduler()
+    scheduler = BackgroundScheduler(timezone=ist)
+    logging.info("Initializing BackgroundScheduler...")
+
     scheduler.add_job(func=cleanup_old_menu, trigger="cron", hour=0, minute=0)  # midnight daily
-    scheduler.add_job(func=generate_high_low_alerts, trigger="interval", minutes=60)  # update alerts every 30 mins
-    # Pass app via lambda to the job to ensure app context is available
-    scheduler.add_job(func=lambda: send_admin_notification_job(app), trigger="cron", hour=23, minute=50)
+    scheduler.add_job(func=generate_high_low_alerts, trigger="interval", minutes=60)  # update alerts every 60 mins
+
+    # Meal end times in 24h format
+    meal_end_times = {
+        "breakfast": (11, 0),
+        "lunch": (16, 0),
+        "snacks": (18, 30),
+        "dinner": (0, 0),  # midnight
+    }
+
+    # Schedule 5 minutes before each meal end
+    for meal, (hour, minute) in meal_end_times.items():
+        trigger_hour = hour
+        trigger_minute = minute - 5
+        if trigger_minute < 0:
+            trigger_hour = (trigger_hour - 1) % 24
+            trigger_minute += 60
+
+        scheduler.add_job(
+            func=lambda m=meal: send_admin_notification_job(app),
+            trigger="cron",
+            hour=trigger_hour,
+            minute=trigger_minute,
+            timezone=ist,
+            id=f"notify_{meal}"
+        )
+        logging.info(f"Scheduled admin notification for {meal} at {trigger_hour:02d}:{trigger_minute:02d} IST")
+
+    logging.info("Scheduler jobs added.")
+
+    # Start the scheduler
     scheduler.start()
-    app.logger.info("Background scheduler started")
+    logging.info("Background scheduler started.")
+    logging.info(f"Scheduled jobs: {scheduler.get_jobs()}")
