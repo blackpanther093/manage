@@ -115,30 +115,21 @@ def send_admin_notification_job(app):
         except Exception as e:
             logging.error(f"Error sending admin notifications in scheduler: {e}")
 
-def schedule_admin_notification(app, meal):
-    def job():
-        logging.info(f"Running admin notification job for {meal}")
-        send_admin_notification_job(app)
-    return job
-
 def start_scheduler(app):
-    ist = pytz.timezone("Asia/Kolkata")  # same timezone as get_fixed_time()
-
+    ist = pytz.timezone("Asia/Kolkata")
     scheduler = BackgroundScheduler(timezone=ist)
     logging.info("Initializing BackgroundScheduler...")
 
-    scheduler.add_job(func=cleanup_old_menu, trigger="cron", hour=0, minute=0)  # midnight daily
-    scheduler.add_job(func=generate_high_low_alerts, trigger="interval", minutes=60)  # update alerts every 60 mins
+    scheduler.add_job(func=cleanup_old_menu, trigger="cron", hour=0, minute=0)
+    scheduler.add_job(func=generate_high_low_alerts, trigger="interval", minutes=60)
 
-    # Meal end times in 24h format
     meal_end_times = {
         "breakfast": (11, 0),
         "lunch": (16, 0),
         "snacks": (18, 30),
-        "dinner": (0, 0),  # midnight
+        "dinner": (0, 0),
     }
 
-    # Schedule 5 minutes before each meal end
     for meal, (hour, minute) in meal_end_times.items():
         trigger_hour = hour
         trigger_minute = minute - 5
@@ -146,20 +137,23 @@ def start_scheduler(app):
             trigger_hour = (trigger_hour - 1) % 24
             trigger_minute += 60
 
-        job = schedule_admin_notification(app, meal)
+        def job_wrapper(m=meal):
+            logging.info(f"⏰ Running scheduled job for {m}")
+            send_admin_notification_job(app)
+
         scheduler.add_job(
-            func=job,
+            func=job_wrapper,
             trigger="cron",
             hour=trigger_hour,
             minute=trigger_minute,
-            id=f"notify_{meal}"
+            id=f"notify_{meal}",
+            timezone=ist,   # 🔹 ensure IST
         )
 
-        logging.info(f"Scheduled admin notification for {meal} at {trigger_hour:02d}:{trigger_minute:02d} IST")
+        logging.info(
+            f"Scheduled admin notification for {meal} at {trigger_hour:02d}:{trigger_minute:02d} IST"
+        )
 
-    logging.info("Scheduler jobs added.")
-
-    # Start the scheduler
     scheduler.start()
-    logging.info("Background scheduler started.")
+    logging.info("✅ Background scheduler started.")
     logging.info(f"Scheduled jobs: {scheduler.get_jobs()}")

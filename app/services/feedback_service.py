@@ -111,7 +111,8 @@ class FeedbackService:
     @classmethod
     def get_today_critical_feedbacks(cls) -> Tuple[List[Dict], List[Dict]]:
         """Get today's critical feedbacks for both messes"""
-        meal = TimeUtils.get_current_meal
+        # meal = TimeUtils.get_current_meal // A very major bug, Python type method cannot be converted
+        meal = TimeUtils.get_current_meal()
         mess1_critical = []
         mess2_critical = []
 
@@ -133,7 +134,7 @@ class FeedbackService:
                     for row in rows:
                         text = (row.get('comments') or '').strip()
                         food_item = row.get('food_item') or ''
-                        meal = row.get('meal') or ''
+                        meal_value = row.get('meal') or ''
                         if text:
                             classification = classify_feedback(text)
                             if classification == "Critical":
@@ -142,7 +143,7 @@ class FeedbackService:
                                 target_list.append({
                                     'comments': text,
                                     'food_item': food_item,
-                                    'meal': meal
+                                    'meal': meal_value
                                 })
 
         except Exception as e:
