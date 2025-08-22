@@ -5,7 +5,7 @@ from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, current_app, jsonify
 from werkzeug.security import check_password_hash, generate_password_hash
 from app.models.database import DatabaseManager
-from app.utils.helpers import send_confirmation_email
+from app.utils.helpers import send_confirmation_email, normalize_email
 from app.utils.security import security_manager  # Added security manager import
 import logging
 
@@ -154,11 +154,12 @@ def login():
 def signup():
     if request.method == 'POST':
         email = request.form.get('email', '').strip()
+        normalized_email = normalize_email(email)
         name = request.form.get('name', '').strip()
         mess_choice = request.form.get('mess', '').strip()  # mess1 / mess2
         password = request.form.get('password', '').strip()
 
-        if not email.endswith('@iiitdm.ac.in'):
+        if not normalized_email.endswith('@iiitdm.ac.in'):
             flash("Only institute students are allowed.", 'error')
             return render_template('auth/signup.html')
 
@@ -168,7 +169,7 @@ def signup():
 
         try:
             with DatabaseManager.get_db_cursor(dictionary=True) as (cursor, connection):
-                cursor.execute("SELECT s_id FROM student WHERE mail = %s", (email,))
+                cursor.execute("SELECT s_id FROM student WHERE mail = %s", (normalized_email,))
                 if cursor.fetchone():
                     flash("Account already exists.", 'error')
                     return render_template('auth/signup.html')
@@ -176,13 +177,13 @@ def signup():
                 # Generate token with signup data
                 serializer = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
                 token = serializer.dumps({
-                    'email': email,
+                    'email': normalized_email,
                     'name': name,
                     'mess_choice': mess_choice,
                     'password': generate_password_hash(password)
                 })
 
-                send_confirmation_email(email, token)
+                send_confirmation_email(normalized_email, token)
                 flash("A confirmation email has been sent. Please check your inbox.", 'success')
                 return redirect(url_for('auth.signup'))
             

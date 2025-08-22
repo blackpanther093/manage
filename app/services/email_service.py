@@ -10,6 +10,22 @@ from app.utils.security import security_manager
 class EmailService:
     """Service class for email operations"""
     
+    @staticmethod
+    def normalize_email(email: str) -> str:
+        """Normalize email to prevent duplicates (e.g., + trick, dots)"""
+        email = email.strip().lower()
+        if '@' not in email:
+            return email  # fallback for invalid email
+
+        local_part, domain = email.split('@')
+
+        # If domain is Gmail, Googlemail, or institute domain (hosted on Gmail)
+        if domain in ['gmail.com', 'googlemail.com', 'iiitdm.ac.in']:
+            local_part = local_part.split('+')[0]  # remove +tag
+            local_part = local_part.replace('.', '')  # remove dots
+
+        return f"{local_part}@{domain}"
+    
     @classmethod
     def send_confirmation_email(cls, recipient_email: str, token: str) -> bool:
         """Send account confirmation email with token link"""

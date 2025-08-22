@@ -56,6 +56,7 @@ get_switch_activity = NotificationService.get_switch_activity
 clear_switch_activity_cache = NotificationService.clear_notifications_cache
 
 # Email services
+normalize_email = EmailService.normalize_email
 send_confirmation_email = EmailService.send_confirmation_email
 
 # LLM services
