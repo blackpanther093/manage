@@ -48,6 +48,39 @@
             <p class="text-gray-600 dark:text-gray-400">Welcome to your mess management dashboard</p>
         </div>
 
+        <!-- Poll Section -->
+
+        {% if is_serving and not student_vote%}
+        <div id="poll-message" class="hidden text-center p-3 mt-4 rounded-xl font-medium"></div>
+        
+        <div id="poll-flash" class="hidden mb-4 p-3 rounded-xl text-center font-medium"></div>
+        <div id="poll-card" class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 mb-8 card-hover">
+            <div class="flex flex-col sm:flex-row items-center sm:justify-between text-center sm:text-left">
+                <div class="flex items-center mb-4 sm:mb-0">
+                    <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center mr-4">
+                        <i class="ph ph-fork-knife text-blue-600 dark:text-blue-400 text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">Today's Meal Poll</h3>
+                        <p class="text-gray-600 dark:text-gray-400 text-sm">Do you like today's {{ meal }}?</p>
+                    </div>
+                </div>
+                <div class="flex gap-3 mt-4 sm:mt-0">
+                    <button 
+                        class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl font-medium transition-colors"
+                        onclick="sendVote('Like')">
+                        Like
+                    </button>
+                    <button 
+                        class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl font-medium transition-colors"
+                        onclick="sendVote('Dislike')">
+                        Dislike
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Quick Actions -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
             <!-- Feedback Status -->
@@ -194,4 +227,49 @@
         {% endif %}
     </div>
 </div>
+
+<script>
+function sendVote(vote) {
+  const card = document.getElementById('poll-card');
+  const flashBox = document.getElementById('poll-flash');
+  if (!card || !flashBox) return;
+
+  const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+  const btns = card.querySelectorAll('button');
+  btns.forEach(b => b.disabled = true);
+
+  fetch('/student/poll/vote', {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrfToken
+    },
+    body: JSON.stringify({ vote: vote })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      flashBox.textContent = "Vote recorded successfully!";
+      flashBox.className = "mb-4 p-3 rounded-xl text-center font-medium bg-green-500 text-white";
+      flashBox.classList.remove("hidden");
+      card.classList.add('hidden'); // hide poll on success
+    } else {
+      flashBox.textContent = "Something went wrong!";
+      flashBox.className = "mb-4 p-3 rounded-xl text-center font-medium bg-red-500 text-white";
+      flashBox.classList.remove("hidden");
+      btns.forEach(b => b.disabled = false); // enable buttons again
+    }
+
+    setTimeout(() => flashBox.classList.add("hidden"), 3000);
+  })
+  .catch(() => {
+    flashBox.textContent = "Network error!";
+    flashBox.className = "mb-4 p-3 rounded-xl text-center font-medium bg-red-500 text-white";
+    flashBox.classList.remove("hidden");
+    btns.forEach(b => b.disabled = false);
+    setTimeout(() => flashBox.classList.add("hidden"), 3000);
+  });
+}
+</script>
+
 {% endblock %}

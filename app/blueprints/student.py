@@ -1,12 +1,14 @@
 """
 Student routes for ManageIt application
 """
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
 from app.models.database import DatabaseManager
-from app.utils.helpers import get_fixed_time, get_current_meal, get_menu, is_odd_week, get_notifications, get_monthly_avg_ratings_cached, get_leaderboard_cached, get_non_veg_menu, get_feature_toggle_status, clear_feedback_summary_cache, clear_feedback_detail_cache
+from app.utils.helpers import get_fixed_time, get_current_meal, get_menu, is_odd_week, get_notifications, get_monthly_avg_ratings_cached, get_leaderboard_cached, get_non_veg_menu, get_feature_toggle_status, clear_feedback_summary_cache, clear_feedback_detail_cache, clear_poll_cache
 from app.services.feedback_service import FeedbackService  # Import the class containing submit_feedback
 from app.services.payment_service import PaymentService
 import logging
+# import time
+from datetime import time
 
 student_bp = Blueprint('student', __name__)
 
@@ -48,19 +50,47 @@ def dashboard():
             feedback_given = cursor.fetchone() is not None
             feedback_status = "Feedback Submitted" if feedback_given else "Feedback Pending"
             
+                        # --- Get student's vote for current meal ---
+            cursor.execute("""
+                SELECT vote FROM meal_poll
+                WHERE student_id = %s AND mess = %s AND meal = %s AND poll_date = %s
+            """, (student_id, mess_name, meal, created_at))
+            result = cursor.fetchone()
+            student_vote = result[0] if result else None  # Can be 'Like', 'Dislike', or None
+
         # Cached leaderboard
         weekday = get_fixed_time().strftime('%A')
         week_type = 'odd' if is_odd_week() else 'even'
         leaderboard = get_leaderboard_cached(mess_name, weekday, week_type)
+        # print(f"leaderboard: {leaderboard}")  # << Add this
 
         # Cached monthly avg ratings
         monthly_avg_ratings = get_monthly_avg_ratings_cached()
-        
+        # print(f"monthly_avg_ratings: {monthly_avg_ratings}")  # << Add this
+
+        current_time = get_fixed_time().time()
+        # print(f"Current time: {current_time}")  # << Add this
+
+        # Define serving time intervals as tuples of (start_time, end_time)
+        serving_intervals = [
+            (time(7, 0), time(9, 0)),
+            (time(12, 0), time(14, 0)),
+            (time(17, 0), time(18, 0)),
+            (time(19, 0), time(21, 0)),
+        ]
+        # logging.debug(f"Serving intervals: {serving_intervals}")  # << Add this
+
+        is_serving = any(start <= current_time <= end for start, end in serving_intervals)
+        # logging.debug(f"is_serving: {is_serving}")  # << Add this
+        # print(f"is_serving: {is_serving}")  # << Add this
         return render_template('student/dashboard.html',
                              greeting=greeting,
                              feedback_status=feedback_status,
                              leaderboard=leaderboard,
-                             monthly_avg_ratings=monthly_avg_ratings)
+                             monthly_avg_ratings=monthly_avg_ratings,
+                             student_vote=student_vote,
+                             meal=meal,
+                             is_serving=is_serving)
                              
     except Exception as e:
         logging.error(f"Student dashboard error: {e}")
@@ -69,7 +99,43 @@ def dashboard():
                              greeting="Hello", 
                              feedback_status="Unknown",
                              leaderboard=[], 
-                             monthly_avg_ratings=[])
+                             monthly_avg_ratings=[],
+                             student_vote=None,
+                             meal=None,
+                             is_serving=False)
+
+@student_bp.route('/poll/vote', methods=['POST'])
+def poll_vote():
+    """Handle real-time voting for Like/Dislike"""
+    redirect_response = require_student_login()
+    if redirect_response:
+        return jsonify({"success": False, "error": "Not logged in"}), 401
+
+    try:
+        student_id = session['student_id']
+        mess_name = session['mess']
+        meal = get_current_meal()
+        poll_date = get_fixed_time().date()
+        created_at = get_fixed_time().strftime('%Y-%m-%d %H:%M:%S')
+        vote = request.json.get('vote')  # 'Like' or 'Dislike'
+
+        with DatabaseManager.get_db_cursor() as (cursor, connection):
+            # Insert or update vote with fixed timestamp
+            cursor.execute("""
+                INSERT INTO meal_poll (student_id, mess, meal, vote, poll_date, created_at)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                ON DUPLICATE KEY UPDATE vote = VALUES(vote), created_at = VALUES(created_at)
+            """, (student_id, mess_name, meal, vote, poll_date, created_at))
+            connection.commit()
+        # ✅ Clear poll cache after successful vote
+        clear_poll_cache(meal)
+        # flash(f"Thanks! Your '{vote}' vote was recorded.", "success")
+        return jsonify({"success": True, "vote": vote, "created_at": created_at})
+    
+    except Exception as e:
+        logging.error(f"Poll vote error: {e}")
+        # flash("Something went wrong while saving your vote.", "danger")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 @student_bp.route('/feedback', methods=['GET', 'POST'])
 def feedback():

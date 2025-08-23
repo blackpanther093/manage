@@ -58,7 +58,8 @@ class CacheManager:
         self.waste_cache = TTLCache()
         self.notification_cache = TTLCache()
         self.feature_toggle_cache = TTLCache()
-        
+        self.poll_cache = TTLCache()
+
         # Cache TTL constants (in seconds)
         self.MENU_TTL = 3600  # 1 hour
         self.RATING_TTL = 1800  # 30 minutes
@@ -67,12 +68,13 @@ class CacheManager:
         self.WASTE_TTL = 86400  # 24 hours
         self.NOTIFICATION_TTL = 1800  # 30 minutes
         self.FEATURE_TOGGLE_TTL = 86400  # 24 hours
-    
+        self.POLL_TTL = 3600  # 1 hour
+
     def clear_all_caches(self):
         """Clear all caches"""
         for cache in [self.menu_cache, self.rating_cache, self.non_veg_cache,
                      self.payment_cache, self.feedback_cache, self.waste_cache,
-                     self.notification_cache, self.feature_toggle_cache]:
+                     self.notification_cache, self.feature_toggle_cache, self.poll_cache]:
             cache.clear()
 
 # Global cache manager instance

@@ -11,6 +11,7 @@ from app.services.waste_service import WasteService
 from app.services.notification_service import NotificationService
 from app.services.email_service import EmailService
 from app.services.llm_service import LLMService
+from app.services.poll_service import PollService
 
 # Time utilities
 get_fixed_time = TimeUtils.get_fixed_time
@@ -63,6 +64,10 @@ send_confirmation_email = EmailService.send_confirmation_email
 call_your_llm = LLMService.call_llm
 summarize_feedback_text = LLMService.summarize_feedback_text
 create_admin_notification_from_critical_feedback = LLMService.create_admin_notification_from_critical_feedback
+
+# Poll services
+get_poll_stats = PollService.get_poll_stats
+clear_poll_cache = PollService.clear_poll_cache
 
 # Cache management
 def clear_non_veg_menu_cache(mess_name, date=None, meal=None):
