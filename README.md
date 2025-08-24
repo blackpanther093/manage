@@ -38,7 +38,7 @@ A robust, secure, and feature-rich mess management system built with Flask, desi
 ## Option 1: Docker Deployment (Recommended)
 \`\`\`bash
 # Clone the repository
-git clone https://github.com/yourusername/manageit.git
+git clone https://github.com/blackpanther093/manage.git
 
 cd manageit
 
