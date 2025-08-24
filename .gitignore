@@ -41,6 +41,9 @@ Pipfile.lock
 logs/
 *.log
 
+#see
+see/
+
 # Unit test / coverage reports
 htmlcov/
 .tox/
