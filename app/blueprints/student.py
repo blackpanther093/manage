@@ -41,35 +41,9 @@ def dashboard():
         else:
             greeting = 'Good Evening'
         
-        with DatabaseManager.get_db_cursor() as (cursor, connection):
-            # Check feedback status
-            cursor.execute("""
-                SELECT DISTINCT s_id FROM feedback_summary 
-                WHERE s_id = %s AND feedback_date = %s AND mess = %s AND meal = %s
-            """, (student_id, created_at, mess_name, meal))
-            feedback_given = cursor.fetchone() is not None
-            feedback_status = "Feedback Submitted" if feedback_given else "Feedback Pending"
-            
-                        # --- Get student's vote for current meal ---
-            cursor.execute("""
-                SELECT vote FROM meal_poll
-                WHERE student_id = %s AND mess = %s AND meal = %s AND poll_date = %s
-            """, (student_id, mess_name, meal, created_at))
-            result = cursor.fetchone()
-            student_vote = result[0] if result else None  # Can be 'Like', 'Dislike', or None
-
-        # Cached leaderboard
-        weekday = get_fixed_time().strftime('%A')
-        week_type = 'odd' if is_odd_week() else 'even'
-        leaderboard = get_leaderboard_cached(mess_name, weekday, week_type)
-        # print(f"leaderboard: {leaderboard}")  # << Add this
-
-        # Cached monthly avg ratings
-        monthly_avg_ratings = get_monthly_avg_ratings_cached()
-        # print(f"monthly_avg_ratings: {monthly_avg_ratings}")  # << Add this
-
         current_time = get_fixed_time().time()
-        # print(f"Current time: {current_time}")  # << Add this
+        # logging.debug(f"Current time: {current_time}")  # << Add this
+
 
         # Define serving time intervals as tuples of (start_time, end_time)
         serving_intervals = [
@@ -81,8 +55,38 @@ def dashboard():
         # logging.debug(f"Serving intervals: {serving_intervals}")  # << Add this
 
         is_serving = any(start <= current_time <= end for start, end in serving_intervals)
-        # logging.debug(f"is_serving: {is_serving}")  # << Add this
-        # print(f"is_serving: {is_serving}")  # << Add this
+
+        with DatabaseManager.get_db_cursor() as (cursor, connection):
+            # Check feedback status
+            cursor.execute("""
+                SELECT DISTINCT s_id FROM feedback_summary 
+                WHERE s_id = %s AND feedback_date = %s AND mess = %s AND meal = %s
+            """, (student_id, created_at, mess_name, meal))
+            feedback_given = cursor.fetchone() is not None
+            feedback_status = "Feedback Submitted" if feedback_given else "Feedback Pending"
+            
+            student_vote = None
+
+            if(is_serving and meal):
+                        # --- Get student's vote for current meal ---
+                cursor.execute("""
+                    SELECT vote FROM meal_poll
+                    WHERE student_id = %s AND mess = %s AND meal = %s AND poll_date = %s
+                """, (student_id, mess_name, meal, created_at))
+                # print("Checking for existing vote...")
+                result = cursor.fetchone()
+                student_vote = result[0] if result else None  # Can be 'Like', 'Dislike', or None
+
+        # Cached leaderboard
+        weekday = get_fixed_time().strftime('%A')
+        week_type = 'odd' if is_odd_week() else 'even'
+        leaderboard = get_leaderboard_cached(mess_name, weekday, week_type)
+        # print(f"leaderboard: {leaderboard}")  # << Add this
+
+        # Cached monthly avg ratings
+        monthly_avg_ratings = get_monthly_avg_ratings_cached()
+        # print(f"monthly_avg_ratings: {monthly_avg_ratings}")  # << Add this
+
         return render_template('student/dashboard.html',
                              greeting=greeting,
                              feedback_status=feedback_status,

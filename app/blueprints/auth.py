@@ -27,11 +27,25 @@ def login():
         try:
             if request.is_json:
                 data = request.get_json()
-                user_id = data.get('id', '').strip() if data else ''
+                raw_user_input = data.get('id', '').strip() if data else ''
                 password = data.get('password', '').strip() if data else ''
             else:
-                user_id = request.form.get('id', '').strip()
+                raw_user_input = request.form.get('id', '').strip()
                 password = request.form.get('password', '').strip()
+            
+            # Process raw_user_input to get user_id
+            if '@' in raw_user_input:
+                # Check domain
+                if not raw_user_input.lower().endswith('@iiitdm.ac.in'):
+                    # Invalid domain - flash error and return
+                    if request.is_json:
+                        return jsonify({'error': 'Invalid ID or password.'}), 400
+                    flash("Invalid ID or password.", 'error')
+                    return render_template('auth/login.html')
+                # Extract user_id before '@'
+                user_id = raw_user_input.split('@')[0]
+            else:
+                user_id = raw_user_input
             
             if not user_id or not password:
                 current_app.logger.warning(f"Login attempt with missing credentials from IP: {request.remote_addr}")
