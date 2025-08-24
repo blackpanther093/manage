@@ -125,7 +125,7 @@ class FeedbackService:
                         SELECT detail_id, d.feedback_id, food_item, rating, comments, created_at
                         FROM feedback_details d 
                         JOIN feedback_summary s ON d.feedback_id = s.feedback_id
-                        WHERE DATE(created_at) = %s AND s.mess = %s AND meal = %s
+                        WHERE DATE(created_at) = %s AND s.mess = %s AND meal = %s AND comments IS NOT NULL AND comments <> '' AND rating <= 2
                         ORDER BY created_at ASC
                     """, (today_date, mess, meal))
 

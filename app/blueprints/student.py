@@ -192,7 +192,7 @@ def feedback():
             non_veg_menu2 = get_non_veg_menu('mess2')
         
         # Get menu items
-        _, veg_menu_items, = get_menu()
+        _, veg_menu_items, _ = get_menu()
         
         # Filter veg items
         exclusions = {'salt', 'sugar', 'ghee', 'podi', 'coffee', 'bbj', 'sprouts', 'curd', 'papad'}

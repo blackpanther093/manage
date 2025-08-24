@@ -39,93 +39,79 @@
                 </div>
                 {% endif %}
                 <h2 class="text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-4">Today's {{ meal }}</h2>
+                {% if top_rated_item %}
+                    <p class="text-lg font-medium text-orange-500 dark:text-orange-400 mb-4">
+                        🔥 Most Loved: {{ top_rated_item }}
+                    </p>
+                {% endif %}
                 <p class="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">Fresh meals prepared with care and quality ingredients</p>
             </div>
 
-            <!-- Combined Ratings + Feedback -->
+            <!-- Ratings + Fun Labels + Feedback -->
             <div class="grid md:grid-cols-2 gap-8 mb-12 lg:mb-16">
-    <!-- Mess Food Sutra -->
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-8 card-hover text-center flex flex-col items-center">
-        <!-- Icon -->
-        <div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mb-4">
-            <i class="ph ph-buildings text-white text-2xl"></i>
-        </div>
-        <!-- Name & Floor -->
-        <h3 class="text-2xl font-semibold text-gray-900 dark:text-white mb-1">Mess Food Sutra</h3>
-        <p class="text-gray-500 dark:text-gray-400 mb-4 text-sm">Ground & First Floor</p>
-        
-        <!-- Rating -->
-        <div class="flex items-center justify-center mb-1">
-            <span class="text-3xl font-bold text-gray-900 dark:text-white mr-2">{{ current_avg_rating_mess1 }}</span>
-            <span class="text-lg text-gray-500 dark:text-gray-400">/5</span>
-        </div>
-        <div class="flex justify-center mb-2 space-x-1">
-            {% for i in range(5) %}
-                <i class="ph-fill ph-star rating-star {{ 'empty' if i >= current_avg_rating_mess1|int else '' }}"></i>
-            {% endfor %}
-        </div>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">{{ mess1_count }} reviews</p>
+                {% for mess_name, rating, count, stats, color in [
+                    ('Mess Food Sutra', current_avg_rating_mess1, mess1_count, poll_stats.mess1, 'blue'),
+                    ('Mess Sakthi', current_avg_rating_mess2, mess2_count, poll_stats.mess2, 'purple')
+                ] %}
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-8 card-hover text-center flex flex-col items-center">
+                    <div class="w-16 h-16 bg-gradient-to-r from-{{color}}-500 to-{{color}}-600 rounded-2xl flex items-center justify-center mb-4">
+                        <i class="ph ph-buildings text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-semibold text-gray-900 dark:text-white mb-1">{{ mess_name }}</h3>
+                    <p class="text-gray-500 dark:text-gray-400 mb-4 text-sm">
+                        {% if mess_name == 'Mess Food Sutra' %}Ground & First Floor{% else %}Second & Third Floor{% endif %}
+                    </p>
+                    
 
-        <!-- Today's Meal & Buttons -->
-        <!-- <p class="font-medium text-gray-700 dark:text-gray-300 mb-2">Today's {{ meal }}</p> -->
-    <div class="flex justify-center items-center gap-8 mt-5 py-2 px-4 rounded-lg bg-white dark:bg-gray-800 shadow-sm">
-        <!-- Like -->
-        <div class="flex items-center gap-2 text-green-600 text-lg font-medium">
-            <span class="text-2xl">👍</span>
-            <span>{{ poll_stats.mess1.Like }}</span>
-        </div>
+                    <!-- Rating Number + Label -->
+                    <div class="flex flex-col items-center mb-3">
+                        <div class="flex items-center justify-center mb-1">
+                            <span class="text-3xl font-bold text-gray-900 dark:text-white mr-3">{{ rating }}</span>
+                            <span class="text-lg text-gray-500 dark:text-gray-400">/5</span>
+                        </div>
+                        
+                    </div>
 
-        <!-- Dislike -->
-        <div class="flex items-center gap-2 text-red-600 text-lg font-medium">
-            <span class="text-2xl">👎</span>
-            <span>{{ poll_stats.mess1.Dislike }}</span>
-        </div>
-    </div>
-    </div>
+                     <!-- Stars -->
+                    <div class="flex justify-center mb-4 space-x-1">
+                        {% for i in range(5) %}
+                            <i class="ph-fill ph-star rating-star {{ 'empty' if i >= rating|int else '' }}"></i>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- <div class="flex flex-col items-center mb-3">
+                        <p class="text-sm font-medium text-gray-600 dark:text-gray-300 max-w-xs break-words">
+                            {% if rating >= 4 %}🏆 Mess Hall of Fame
+                            {% elif rating >= 3 %}😋 Not Bad!
+                            {% elif rating >= 2 %}😐 Meh…
+                            {% else %}😅 Oops, Disaster!
+                            {% endif %}
+                        </p>
+                    </div> -->
 
-    <!-- Mess Sakthi -->
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-8 card-hover text-center flex flex-col items-center">
-        <!-- Icon -->
-        <div class="w-16 h-16 bg-gradient-to-r from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mb-4">
-            <i class="ph ph-buildings text-white text-2xl"></i>
-        </div>
-        <!-- Name & Floor -->
-        <h3 class="text-2xl font-semibold text-gray-900 dark:text-white mb-1">Mess Sakthi</h3>
-        <p class="text-gray-500 dark:text-gray-400 mb-4 text-sm">Second & Third Floor</p>
-        
-        <!-- Rating -->
-        <div class="flex items-center justify-center mb-1">
-            <span class="text-3xl font-bold text-gray-900 dark:text-white mr-2">{{ current_avg_rating_mess2 }}</span>
-            <span class="text-lg text-gray-500 dark:text-gray-400">/5</span>
-        </div>
-        <div class="flex justify-center mb-2 space-x-1">
-            {% for i in range(5) %}
-                <i class="ph-fill ph-star rating-star {{ 'empty' if i >= current_avg_rating_mess2|int else '' }}"></i>
-            {% endfor %}
-        </div>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">{{ mess2_count }} reviews</p>
+                    <!-- Reviews count or Empty state -->
+                    {% if count > 0 %}
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">{{ count }} reviews</p>
+                    {% else %}
+                        <p class="text-sm text-gray-400 italic mb-5">No votes yet… Is everyone too full to type? 🍽️</p>
+                    {% endif %}
 
-        <!-- Today's Meal & Buttons -->
-        <!-- <p class="font-medium text-gray-700 dark:text-gray-300 mb-2">Today's {{ meal }}</p> -->
-        <div class="flex justify-center items-center gap-8 mt-5 py-2 px-4 rounded-lg bg-white dark:bg-gray-800 shadow-sm">
-    <!-- Like -->
-            <div class="flex items-center gap-2 text-green-600 text-lg font-medium">
-                <span class="text-2xl">👍</span>
-                <span>{{ poll_stats.mess2.Like }}</span>
+                    <!-- Like / Dislike -->
+                    <div class="flex justify-center items-center gap-10 mt-4 py-3 px-6 rounded-lg bg-white dark:bg-gray-800 shadow-sm">
+                        <div class="flex items-center gap-3 text-green-600 text-lg font-medium">
+                            <span class="text-3xl">👍</span>
+                            <span>{{ stats.Like }}</span>
+                        </div>
+                        <div class="flex items-center gap-3 ml-2 text-red-600 text-lg font-medium">
+                            <span class="text-3xl">👎</span>
+                            <span>{{ stats.Dislike }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
 
-            <!-- Dislike -->
-            <div class="flex items-center gap-2 text-red-600 text-lg font-medium">
-                <span class="text-2xl">👎</span>
-                <span>{{ poll_stats.mess2.Dislike }}</span>
-            </div>
-        </div>
-
-
-    </div>
-</div>
-
-            <!-- Menu Sections -->
+            <!-- Menu Sections remain same -->
             <div class="grid lg:grid-cols-3 gap-8">
                 <!-- Vegetarian Menu -->
                 <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-8 card-hover">

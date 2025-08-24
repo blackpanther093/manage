@@ -25,10 +25,11 @@ class MenuService:
         try:
             menu_data = cls._fetch_menu_from_db(date, current_meal)
             cache_manager.menu_cache.set(cache_key, menu_data)
+            # print("DEBUG: Fetched menu from DB")
             return menu_data
         except Exception as e:
             logging.error(f"Error fetching menu: {e}")
-            return None, []
+            return None, [], None
     
     @classmethod
     def _fetch_menu_from_db(cls, date=None, meal=None) -> Tuple[Optional[str], List[str]]:
@@ -38,7 +39,7 @@ class MenuService:
             meal = meal or TimeUtils.get_current_meal()
 
             if not meal:
-                return None, []
+                return None, [], None
 
             week_type = 'Odd' if TimeUtils.is_odd_week(date) else 'Even'
             day = date.strftime('%A')
@@ -59,11 +60,27 @@ class MenuService:
                     """, (week_type, day, meal))
                     veg_menu_items = [item[0] for item in cursor.fetchall()]
 
-            return meal, veg_menu_items
+                weekday = TimeUtils.get_fixed_time().strftime('%A')
+        
+                cursor.execute("""
+                    SELECT d.food_item, ROUND(AVG(d.rating), 2) AS avg_rating
+                    FROM feedback_details d
+                    JOIN feedback_summary s ON d.feedback_id = s.feedback_id
+                    JOIN menu m ON d.food_item = m.food_item  
+                    WHERE m.day = %s AND m.week_type = %s AND m.meal = %s
+                    GROUP BY d.food_item
+                    ORDER BY avg_rating DESC
+                    LIMIT 1
+                """,(weekday, week_type, meal))
+                top_rated = cursor.fetchone()
+                if top_rated:
+                    top_rated_item = top_rated[0]
+                    
+            return meal, veg_menu_items, top_rated_item if top_rated else None
 
         except Exception as e:
             logging.error(f"Error fetching menu from database: {e}")
-            return None, []
+            return None, [], None
     
     @classmethod
     def get_non_veg_menu(cls, mess_name: str, date=None, meal=None) -> List[Tuple]:
@@ -83,6 +100,7 @@ class MenuService:
         
         # Fetch from database
         try:
+            # print("DEBUG: Fetching non-veg menu from DB")
             with DatabaseManager.get_db_cursor() as (cursor, connection):
                 cursor.execute("""
                     SELECT distinct food_item, MIN(cost)

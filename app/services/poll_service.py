@@ -26,8 +26,9 @@ class PollService:
         # Fetch from DB
         try:
             stats = cls._fetch_poll_stats_from_db(meal, poll_date)
+            # print("DEBUG: Fetched poll stats from DB")
             cache_manager.poll_cache.set(cache_key, stats)
-            cls.clear_poll_cache(meal) # Ensure cache is cleared after voting
+            # cls.clear_poll_cache(meal) # Ensure cache is cleared after voting
             return stats
         except Exception as e:
             logging.error(f"Error fetching poll stats: {e}")

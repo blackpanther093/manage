@@ -27,6 +27,7 @@ class RatingService:
         # Fetch from database
         try:
             ratings = cls._fetch_ratings_from_db(meal)
+            # print("DEBUG: Fetched ratings from DB")
             cache_manager.rating_cache.set(cache_key, ratings)
             return ratings
         except Exception as e:

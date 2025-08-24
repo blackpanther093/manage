@@ -14,9 +14,9 @@ main_bp = Blueprint('main', __name__)
 @main_bp.route('/home')
 def home():
     """Home page displaying current menu and ratings"""
-    start_time = pytime.time()
+    # start_time = pytime.time()
     try:
-        meal, veg_menu_items = get_menu() or (None, [])
+        meal, veg_menu_items, top_rated_item = get_menu() or (None, [], None)
         # logging.info(f"DEBUG get_menu() returned meal: {meal}, veg_menu_items: {veg_menu_items}")
         # print(f"DEBUG get_menu() returned meal: {meal}, veg_menu_items: {veg_menu_items}")
         non_veg_menu1 = get_non_veg_menu("mess1")
@@ -43,6 +43,8 @@ def home():
         is_serving = any(start <= current_time <= end for start, end in serving_intervals)
         # logging.debug(f"is_serving: {is_serving}")  # << Add this
 
+        # is_serving = True  # TEMP OVERRIDE FOR TESTING
+        
         # --- Fetch like/dislike stats for current date and meal ---
         # poll_date = get_fixed_time().date()
         poll_stats = get_poll_stats(meal) if meal else {"mess1": {"Like": 0, "Dislike": 0}, "mess2": {"Like": 0, "Dislike": 0}}
@@ -55,6 +57,7 @@ def home():
         return render_template("home.html",
             meal=meal,
             veg_menu_items=veg_menu_items,
+            top_rated_item=top_rated_item,
             non_veg_menu1=non_veg_menu1,
             non_veg_menu2=non_veg_menu2,
             current_avg_rating_mess1=mess1_rating,

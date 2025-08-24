@@ -47,7 +47,7 @@ def add_non_veg_menu():
         return redirect_response
     
     mess = session.get('mess')
-    meal, _ = get_menu()
+    meal, _, _ = get_menu()
     
     if not meal:
         flash("No meal available at the moment.", 'error')
@@ -168,7 +168,7 @@ def waste_feedback():
     
     mess = session.get('mess')
     current_hour = get_fixed_time().hour
-    meal, veg_menu_items = get_menu()
+    meal, veg_menu_items, _ = get_menu()
     non_veg_menu1 = get_non_veg_menu("mess1")
     non_veg_menu2 = get_non_veg_menu("mess2")
 
