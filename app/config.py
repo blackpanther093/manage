@@ -104,6 +104,10 @@ class Config:
     LOG_MAX_BYTES = 10 * 1024 * 1024  # 10MB
     LOG_BACKUP_COUNT = 5
 
+    COMPRESS_ALGORITHM = None
+    COMPRESS_LEVEL = 6
+    COMPRESS_MIN_SIZE = 500
+
 class DevelopmentConfig(Config):
     """Development configuration"""
     DEBUG = True
@@ -115,6 +119,9 @@ class DevelopmentConfig(Config):
 
 class ProductionConfig(Config):
     """Production configuration with enhanced security"""
+
+    HEALTH_TOKEN = os.getenv('HEALTH_TOKEN', 'your_default_secure_token_here')
+
     DEBUG = False
     TESTING = False
     
@@ -128,6 +135,10 @@ class ProductionConfig(Config):
     # Production logging
     LOG_LEVEL = 'WARNING'
     
+    COMPRESS_ALGORITHM = 'gzip'
+    COMPRESS_LEVEL = 6
+    COMPRESS_MIN_SIZE = 500
+
     RATELIMIT_DEFAULT = "500 per day, 100 per hour"  # More lenient limits
     
     # Production database with connection pooling

@@ -7,9 +7,9 @@
     <title>{% block title %}ManageIt - Mess Management System{% endblock %}</title>
     <!-- <link rel="icon" href="{{ url_for('static', filename='images/favicon.png') }}" type="image/png"> -->
      <!-- Favicon and App Icons -->
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='images/apple-touch-icon.png') }}">
+    <!-- <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='images/apple-touch-icon.png') }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='images/favicon-32x32.png') }}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='images/favicon-16x16.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='images/favicon-16x16.png') }}"> -->
     <link rel="manifest" href="{{ url_for('static', filename='images/site.webmanifest') }}">
     <link rel="shortcut icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
     <meta name="theme-color" content="#ffffff">
@@ -18,7 +18,10 @@
     <link rel="icon" sizes="512x512" href="{{ url_for('static', filename='images/android-chrome-512x512.png') }}"> -->
 
     <!-- <script src="https://cdn.tailwindcss.com"></script> -->
-    <link href="{{ url_for('static', filename='css/output.css') }}" rel="stylesheet">
+    <!-- <link href="{{ url_for('static', filename='css/output.css') }}" rel="stylesheet"> -->
+    <link rel="preload" href="{{ url_for('static', filename='css/output.css') }}" as="style">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
+
     <!-- <link rel="preload" href="{{ url_for('static', filename='css/output.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}"></noscript> -->
     

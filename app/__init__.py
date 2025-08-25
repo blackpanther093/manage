@@ -21,6 +21,8 @@ from app.utils.logging_config import setup_logging, log_security_event
 from app.utils.security import security_manager
 from app.utils.validators import InputValidator
 
+compress = Compress()
+
 def create_app(config_name=None):
     """Create and configure Flask application"""
     app = Flask(__name__, template_folder='templates', static_folder='static')
@@ -31,13 +33,16 @@ def create_app(config_name=None):
     cfg_class = config.get(config_name, Config)
     app.config.from_object(cfg_class)
 
+    # Only initialize compression if COMPRESS_ALGORITHM is set
+    if app.config.get('COMPRESS_ALGORITHM'):
+        compress.init_app(app)
     # Compression
-    Compress(app)
+    # Compress(app)
 
     # CORS
     if config_name == 'production':
         CORS(app,
-             origins=['*'],
+             origins=['https://manage-lths.onrender.com/'],
              allow_headers=['Content-Type', 'Authorization', 'X-Requested-With'],
              methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
              supports_credentials=True)
@@ -71,10 +76,15 @@ def create_app(config_name=None):
     # Talisman
     if config_name == 'production':
         Talisman(app,
-                 force_https=False,
-                 strict_transport_security=False,
-                 permissions_policy={},
-                 content_security_policy=False)
+                force_https=True,
+                strict_transport_security=True,
+                content_security_policy={
+                    'default-src': "'self'",
+                    'img-src': "'self' data: https:",
+                    'script-src': "'self' 'unsafe-inline' https:",
+                    'style-src': "'self' 'unsafe-inline' https:",
+                    'font-src': "'self' https://fonts.gstatic.com",
+                })
 
     # Cache headers
     app.config['SEND_FILE_MAX_AGE_DEFAULT'] = timedelta(days=1)
@@ -106,7 +116,7 @@ def create_app(config_name=None):
         for header, value in app.config.get('SECURITY_HEADERS', {}).items():
             response.headers[header] = value
         if config_name == 'production':
-            response.headers['Access-Control-Allow-Origin'] = '*'
+            response.headers['Access-Control-Allow-Origin'] = 'https://manage-lths.onrender.com'
             response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
             response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Requested-With'
         return response
@@ -139,6 +149,10 @@ def create_app(config_name=None):
     # Health check
     @app.route('/health')
     def health_check():
+        if config_name == 'production':
+            token = request.args.get('token', '')
+            if token != app.config.get('HEALTH_TOKEN'):
+                return "Unauthorized", 401
         try:
             db_health = DatabaseManager.health_check()
             status_code = 200 if db_health['status'] == 'healthy' else 503
@@ -150,6 +164,7 @@ def create_app(config_name=None):
             }, status_code
         except Exception as e:
             return {'status': 'unhealthy', 'error': str(e)}, 503
+
 
     # Security status
     @app.route('/security/status')
