@@ -83,7 +83,7 @@ def create_app(config_name=None):
                     'img-src': "'self' data: https:",
                     'script-src': "'self' 'unsafe-inline' https:",
                     'style-src': "'self' 'unsafe-inline' https:",
-                    'font-src': "'self' https://fonts.gstatic.com",
+                    'font-src': "'self' https://fonts.gstatic.com https://cdn.jsdelivr.net",
                 })
 
     # Cache headers
