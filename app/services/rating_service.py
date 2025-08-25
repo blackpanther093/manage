@@ -127,6 +127,7 @@ class RatingService:
                     JOIN feedback_summary s ON d.feedback_id = s.feedback_id
                     WHERE d.created_at >= DATE_SUB(%s, INTERVAL 1 MONTH)
                     GROUP BY s.mess
+                    ORDER BY s.mess
                 """, (created_at,))
                 data = cursor.fetchall()
                 

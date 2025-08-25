@@ -86,6 +86,7 @@ def dashboard():
         # Cached monthly avg ratings
         monthly_avg_ratings = get_monthly_avg_ratings_cached()
         # print(f"monthly_avg_ratings: {monthly_avg_ratings}")  # << Add this
+        # monthly_avg_ratings = [(k, monthly_avg_ratings.get(k)) for k in ['mess1', 'mess2']]
 
         return render_template('student/dashboard.html',
                              greeting=greeting,
