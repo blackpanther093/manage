@@ -200,7 +200,7 @@ def feedback():
         veg_items = [
             item for item in veg_menu_items 
             if item.lower() not in exclusions 
-            and not any(keyword in item.lower() for keyword in ['banana', 'pickle', 'salad', 'cut fruit', 'sauce', 'chutney'])
+            and not any(keyword in item.lower() for keyword in ['banana', 'pickle', 'salad', 'cut fruit', 'sauce', 'chutney', 'raita', 'boost', 'coffee'])
         ]
         
         if request.method == 'POST':

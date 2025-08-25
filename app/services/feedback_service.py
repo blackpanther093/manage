@@ -7,6 +7,7 @@ from app.models.database import DatabaseManager
 from app.models.feedback_classifier import classify_feedback
 from app.utils.time_utils import TimeUtils
 from app.utils.cache import cache_manager
+from .rating_service import RatingService
 # from app.utils.helpers import get_current_meal
 class FeedbackService:
     """Service class for feedback operations"""
@@ -201,11 +202,9 @@ class FeedbackService:
     @classmethod
     def clear_feedback_cache(cls, mess_name: str = None):
         """Clear feedback cache"""
-        if mess_name:
-            # Clear specific mess cache
-            keys_to_clear = [key for key in cache_manager.feedback_cache._store.keys() 
-                           if mess_name in key]
-            for key in keys_to_clear:
-                cache_manager.feedback_cache.clear(key)
-        else:
-            cache_manager.feedback_cache.clear()
+        print("DEBUG: Clearing feedback cache")        
+        cache_manager.feedback_cache.clear()
+        print("DEBUG: Cleared entire feedback cache")
+        # Always clear ratings regardless
+        RatingService.clear_rating_cache()
+

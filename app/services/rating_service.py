@@ -22,6 +22,7 @@ class RatingService:
         # Try cache first
         cached_data = cache_manager.rating_cache.get(cache_key, cache_manager.RATING_TTL)
         if cached_data:
+            print("DEBUG: Returning cached average ratings")
             return cached_data
         
         # Fetch from database
@@ -142,4 +143,5 @@ class RatingService:
     @classmethod
     def clear_rating_cache(cls):
         """Clear rating-related caches"""
+        print("DEBUG: Clearing rating cache")
         cache_manager.rating_cache.clear()
