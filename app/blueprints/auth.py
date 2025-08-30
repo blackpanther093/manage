@@ -252,7 +252,7 @@ def confirm_email(token):
             cursor.execute("""
                 UPDATE mess_data
                 SET current_capacity = current_capacity + 1
-                WHERE mess_id = %s
+                WHERE mess = %s
             """, (assigned_mess,))
 
             connection.commit()
