@@ -76,16 +76,11 @@ def create_app(config_name=None):
 
     # Talisman
     if config_name == 'production':
+        csp = app.config.get('SECURITY_HEADERS', {}).get('Content-Security-Policy')
         Talisman(app,
                 force_https=True,
                 strict_transport_security=True,
-                content_security_policy={
-                    'default-src': "'self'",
-                    'img-src': "'self' data: https:",
-                    'script-src': "'self' 'unsafe-inline' https:",
-                    'style-src': "'self' 'unsafe-inline' https:",
-                    'font-src': "'self' https://fonts.gstatic.com https://cdn.jsdelivr.net",
-                })
+                content_security_policy=csp)
 
     # Cache headers
     app.config['SEND_FILE_MAX_AGE_DEFAULT'] = timedelta(days=1)
