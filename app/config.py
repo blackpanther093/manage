@@ -44,16 +44,9 @@ class Config:
     TESTING = False
     
     # Mail Configuration
-    MAIL_SERVER = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
-    MAIL_PORT = int(os.getenv('MAIL_PORT', 587))
-    MAIL_USE_TLS = os.getenv('MAIL_USE_TLS', 'true').lower() == 'true'
-    MAIL_USERNAME = os.getenv('MAIL_USERNAME')
-    MAIL_PASSWORD = os.getenv('MAIL_PASSWORD')
-    MAIL_DEFAULT_SENDER = os.getenv('MAIL_DEFAULT_SENDER', MAIL_USERNAME)
-    
-    if not all([MAIL_USERNAME, MAIL_PASSWORD]):
-        raise ValueError("Mail configuration incomplete")
-    
+    BREVO_API_KEY = os.getenv('BREVO_API_KEY')
+    SENDER_EMAIL = os.getenv('SENDER_EMAIL')
+       
     # LLM API Configuration    
     GROQ_API_KEY = os.getenv('GROQ_API_KEY')
     GROQ_PLATFORM = os.getenv('GROQ_PLATFORM', 'https://api.groq.com/openai/v1/chat/completions')
