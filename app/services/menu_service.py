@@ -6,10 +6,24 @@ from typing import Optional, List, Tuple
 from app.models.database import DatabaseManager
 from app.utils.time_utils import TimeUtils
 from app.utils.cache import cache_manager
+from datetime import timedelta
+
+MEAL_ORDER = ["Breakfast", "Lunch", "Snacks", "Dinner"]
 
 class MenuService:
     """Service class for menu operations"""
     
+    @classmethod
+    def _get_meals_to_fetch(cls, current_meal: str, date):
+        """Return [(meal, date), ...] depending on current meal."""
+        idx = MEAL_ORDER.index(current_meal)
+
+        if current_meal == "Dinner":
+            tomorrow = date + timedelta(days=1)
+            return [(MEAL_ORDER[idx], date), ("Breakfast", tomorrow)]
+        else:
+            return [(m, date) for m in MEAL_ORDER[idx:]]
+
     @classmethod
     def get_menu(cls, date=None, meal=None) -> Tuple[Optional[str], List[str]]:
         """Get menu with caching"""
@@ -32,56 +46,75 @@ class MenuService:
             return None, [], None
     
     @classmethod
-    def _fetch_menu_from_db(cls, date=None, meal=None) -> Tuple[Optional[str], List[str]]:
-        """Fetch menu from database"""
+    def _fetch_menu_from_db(cls, date=None, meal=None):
         try:
             date = date or TimeUtils.get_fixed_time().date()
             meal = meal or TimeUtils.get_current_meal()
-
             if not meal:
-                return None, [], None
+                return None, {}, None
 
             week_type = 'Odd' if TimeUtils.is_odd_week(date) else 'Even'
-            day = date.strftime('%A')
+            meals_to_fetch = cls._get_meals_to_fetch(meal, date)
+
+            menus = {}
+            top_rated_item = None
 
             with DatabaseManager.get_db_cursor() as (cursor, connection):
-                # Get veg menu (temporary or default)
-                cursor.execute("""
-                    SELECT distinct food_item FROM temporary_menu
-                    WHERE week_type = %s AND day = %s AND meal = %s
-                """, (week_type, day, meal))
-                temp_menu = cursor.fetchall()
-                veg_menu_items = [item[0] for item in temp_menu] if temp_menu else []
+                for m, d in meals_to_fetch:
+                    day = d.strftime('%A')
 
-                if not veg_menu_items:
-                    cursor.execute("""
-                        SELECT distinct food_item FROM menu
-                        WHERE week_type = %s AND day = %s AND meal = %s
-                    """, (week_type, day, meal))
-                    veg_menu_items = [item[0] for item in cursor.fetchall()]
+                    veg_items = []
 
-                weekday = TimeUtils.get_fixed_time().strftime('%A')
-        
-                cursor.execute("""
-                    SELECT d.food_item, ROUND(AVG(d.rating), 2) AS avg_rating
-                    FROM feedback_details d
-                    JOIN feedback_summary s ON d.feedback_id = s.feedback_id
-                    JOIN menu m ON d.food_item = m.food_item  
-                    WHERE m.day = %s AND m.week_type = %s AND m.meal = %s
-                    GROUP BY d.food_item
-                    ORDER BY avg_rating DESC
-                    LIMIT 1
-                """,(weekday, week_type, meal))
-                top_rated = cursor.fetchone()
-                if top_rated:
-                    top_rated_item = top_rated[0]
-                    
-            return meal, veg_menu_items, top_rated_item if top_rated else None
+                    # ✅ Temporary menu check only for current meal
+                    if m == meal:
+                        # Current meal → check temporary menu
+                        cursor.execute("""
+                            SELECT DISTINCT food_item FROM temporary_menu
+                            WHERE week_type = %s AND day = %s AND meal = %s
+                        """, (week_type, day, m))
+                        temp_menu = cursor.fetchall()
+                        veg_items = [item[0] for item in temp_menu] if temp_menu else []
+
+                        # Fallback to permanent menu if temp empty
+                        if not veg_items:
+                            cursor.execute("""
+                                SELECT DISTINCT food_item FROM menu
+                                WHERE week_type = %s AND day = %s AND meal = %s
+                            """, (week_type, day, m))
+                            veg_items = [item[0] for item in cursor.fetchall()]
+
+                    else:
+                        # Non-current meals → always use permanent menu
+                        cursor.execute("""
+                            SELECT DISTINCT food_item FROM menu
+                            WHERE week_type = %s AND day = %s AND meal = %s
+                        """, (week_type, day, m))
+                        veg_items = [item[0] for item in cursor.fetchall()]
+
+                    menus[m] = veg_items
+
+                    # ✅ Top-rated item only for current meal
+                    if m == meal:
+                        cursor.execute("""
+                            SELECT d.food_item, ROUND(AVG(d.rating), 2) AS avg_rating
+                            FROM feedback_details d
+                            JOIN feedback_summary s ON d.feedback_id = s.feedback_id
+                            JOIN menu m2 ON d.food_item = m2.food_item  
+                            WHERE m2.day = %s AND m2.week_type = %s AND m2.meal = %s
+                            GROUP BY d.food_item
+                            ORDER BY avg_rating DESC
+                            LIMIT 1
+                        """, (day, week_type, m))
+                        top_rated = cursor.fetchone()
+                        if top_rated:
+                            top_rated_item = top_rated[0]
+            # print(f"Menu fetched for {meal}: {menus}")
+            return meal, menus, top_rated_item
 
         except Exception as e:
             logging.error(f"Error fetching menu from database: {e}")
-            return None, [], None
-    
+            return None, {}, None
+
     @classmethod
     def get_non_veg_menu(cls, mess_name: str, date=None, meal=None) -> List[Tuple]:
         """Get non-veg menu with caching"""

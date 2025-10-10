@@ -181,25 +181,25 @@ def signup():
             flash("Please fill in all fields.", 'error')
             return render_template('auth/signup.html')
 
+        with DatabaseManager.get_db_cursor(dictionary=True) as (cursor, connection):
+            cursor.execute("SELECT s_id FROM student WHERE mail = %s", (normalized_email,))
+            if cursor.fetchone():
+                flash("Account already exists.", 'error')
+                return render_template('auth/signup.html')
+            
         try:
-            with DatabaseManager.get_db_cursor(dictionary=True) as (cursor, connection):
-                cursor.execute("SELECT s_id FROM student WHERE mail = %s", (normalized_email,))
-                if cursor.fetchone():
-                    flash("Account already exists.", 'error')
-                    return render_template('auth/signup.html')
+            # Generate token with signup data
+            serializer = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+            token = serializer.dumps({
+                'email': normalized_email,
+                'name': name,
+                'mess_choice': mess_choice,
+                'password': generate_password_hash(password)
+            })
 
-                # Generate token with signup data
-                serializer = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
-                token = serializer.dumps({
-                    'email': normalized_email,
-                    'name': name,
-                    'mess_choice': mess_choice,
-                    'password': generate_password_hash(password)
-                })
-
-                send_confirmation_email(normalized_email, token)
-                flash("A confirmation email has been sent. Please check your inbox.", 'success')
-                return redirect(url_for('auth.signup'))
+            send_confirmation_email(normalized_email, token)
+            flash("A confirmation email has been sent. Please check your inbox (and spam folder)!", 'success')
+            return redirect(url_for('auth.signup'))
             
         except Exception as e:
             logging.error(f"Signup error: {e}")

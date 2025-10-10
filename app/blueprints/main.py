@@ -16,7 +16,7 @@ def home():
     """Home page displaying current menu and ratings"""
     # start_time = pytime.time()
     try:
-        meal, veg_menu_items, top_rated_item = get_menu() or (None, [], None)
+        meal, veg_menu_items, top_rated_item = get_menu() or (None, {}, None)
         # logging.info(f"DEBUG get_menu() returned meal: {meal}, veg_menu_items: {veg_menu_items}")
         # print(f"DEBUG get_menu() returned meal: {meal}, veg_menu_items: {veg_menu_items}")
         non_veg_menu1 = get_non_veg_menu("mess1")
@@ -70,7 +70,20 @@ def home():
     except Exception as e:
         # logging.exception("Exception occurred in home route")
         # logging.info(f"Home route loaded in {pytime.time() - start_time:.3f} seconds (with error)")
-        return render_template("home.html", meal=None, error="Unable to load menu data", is_serving=False)
+        return render_template("home.html",
+            meal=None,
+            veg_menu_items={},  # Provide an empty dictionary
+            top_rated_item=None,
+            non_veg_menu1=[],
+            non_veg_menu2=[],
+            current_avg_rating_mess1=0,
+            current_avg_rating_mess2=0,
+            mess1_count=0,
+            mess2_count=0,
+            is_serving=False,
+            poll_stats={"mess1": {"Like": 0, "Dislike": 0}, "mess2": {"Like": 0, "Dislike": 0}},
+            error="Unable to load menu data"
+        )
 
 
 @main_bp.route('/public-notifications')

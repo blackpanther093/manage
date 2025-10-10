@@ -22,6 +22,7 @@ from app.utils.security import security_manager
 from app.utils.validators import InputValidator
 
 compress = Compress()
+# org_name = 'iiitdmk'
 
 def create_app(config_name=None):
     """Create and configure Flask application"""
@@ -190,6 +191,11 @@ def create_app(config_name=None):
     app.register_blueprint(student_bp, url_prefix='/student')
     app.register_blueprint(mess_bp, url_prefix='/mess')
     app.register_blueprint(admin_bp, url_prefix='/admin')
+    # app.register_blueprint(main_bp, url_prefix='/<org_name>')
+    # app.register_blueprint(auth_bp, url_prefix='/<org_name>/auth')
+    # app.register_blueprint(student_bp, url_prefix='/<org_name>/student')
+    # app.register_blueprint(mess_bp, url_prefix='/<org_name>/mess')
+    # app.register_blueprint(admin_bp, url_prefix='/<org_name>/admin')
 
     # DB init
     with app.app_context():

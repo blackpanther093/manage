@@ -33,11 +33,34 @@
     <!-- <link href="{{ url_for('static', filename='css/phosphor.css') }}" rel="stylesheet"> -->
     <!-- <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"> -->
         
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
+
     <style>
+        
+        .swiper-pagination-bullet {
+            background: #9ca3af; /* neutral gray */
+            opacity: 0.7;
+        }
+        .swiper-pagination-bullet-active {
+            background: #3b82f6; /* blue-500 */
+            opacity: 1;
+        }
+        .swiper-slide {
+            /* min-width: 250px; */
+            max-width: 100%;  /* 👈 prevent overflow*/
+            box-sizing: border-box;
+            
+        }
+        .grid {
+            overflow: hidden;   /* 👈 hides accidental overflow */
+        }
+
         body { 
             font-family: 'Inter', sans-serif;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
+            overflow-x: hidden;
         }
         
         h1 {
@@ -280,5 +303,8 @@
             });
         });
     </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
 </body>
 </html>
