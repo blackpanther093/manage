@@ -80,7 +80,7 @@ def create_app(config_name=None):
         Talisman(app,
                 force_https=True,
                 strict_transport_security=True,
-                content_security_policy=csp)
+                content_security_policy=None)
 
     # Cache headers
     app.config['SEND_FILE_MAX_AGE_DEFAULT'] = timedelta(days=1)
