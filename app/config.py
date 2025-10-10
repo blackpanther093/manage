@@ -143,15 +143,23 @@ class ProductionConfig(Config):
         'X-Content-Type-Options': 'nosniff',
         'X-Frame-Options': 'SAMEORIGIN',
         'Referrer-Policy': 'strict-origin-when-cross-origin',
+        # In your ProductionConfig class in config.py
+
         "Content-Security-Policy": (
             "default-src 'self'; "
             "style-src 'self' 'unsafe-inline' https://unpkg.com https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
             "style-src-elem 'self' 'unsafe-inline' https://unpkg.com https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
-            "font-src 'self' https://unpkg.com https://fonts.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+            
+            # ADDED 'data:' to allow embedded fonts from CSS files
+            "font-src 'self' data: https://unpkg.com https://fonts.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+            
             "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
             "script-src-elem 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
             "img-src 'self' data: https: blob:; "
-            "connect-src 'self' https:; "
+
+            # ADDED the CDN to allow developer source maps to be fetched
+            "connect-src 'self' https://cdn.jsdelivr.net https:; "
+            
             "object-src 'none'; "
             "base-uri 'self';"
         )
