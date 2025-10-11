@@ -33,8 +33,8 @@
     <!-- <link href="{{ url_for('static', filename='css/phosphor.css') }}" rel="stylesheet"> -->
     <!-- <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"> -->
         
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
-    <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <!-- <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script> -->
 
     <style>
         
@@ -266,28 +266,8 @@
                     }, 500);
                 }, 5000);
             });
-            
-            // Add smooth animations to cards
-            const observerOptions = {
-                threshold: 0.1,
-                rootMargin: '0px 0px -50px 0px'
-            };
-            
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('animate-slide-up');
-                    }
-                });
-            }, observerOptions);
-            
-            const cards = document.querySelectorAll('.card-hover');
-            cards.forEach(card => observer.observe(card));
         });
     </script>
-    
-    {% block extra_js %}{% endblock %}
-
     <!-- Auto-inject CSRF token into all forms -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -303,8 +283,9 @@
             });
         });
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>
