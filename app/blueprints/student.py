@@ -198,7 +198,7 @@ def feedback():
         # Filter veg items
         exclusions = {'salt', 'sugar', 'ghee', 'podi', 'coffee', 'bbj', 'sprouts', 'curd', 'papad'}
         veg_items = [
-            item for item in veg_menu_items 
+            item for item in veg_menu_items[meal]
             if item.lower() not in exclusions 
             and not any(keyword in item.lower() for keyword in ['banana', 'pickle', 'salad', 'cut fruit', 'sauce', 'chutney', 'raita', 'boost', 'coffee'])
         ]
