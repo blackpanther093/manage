@@ -131,10 +131,10 @@
                                         {{ meal_name|capitalize }}
                                         
                                         {% if meal_name|lower == meal|lower %}
-                                            <span class="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-600 rounded-full font-medium">Now</span>
+                                            <span class="ml-2 px-2 py-1 text-xs rounded-full font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200">Now</span>
                                         {% endif %}
                                         {% if meal|lower == "dinner" and meal_name|lower == "breakfast" %}
-                                            <span class="ml-2 px-2 py-1 text-xs bg-green-100 text-green-700 rounded-full font-medium">Tomorrow</span>
+                                            <span class="ml-2 px-2 py-1 text-xs rounded-full font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200">Tomorrow</span>
                                         {% endif %}
                                     </h4>
 
@@ -269,29 +269,29 @@ var swiper = new Swiper(".mySwiper", {
     initialSlide: currentIndex,
   });
 
-// THIS IS THE FIX: Use 'load' instead of 'DOMContentLoaded'
-  // It waits for all CSS and assets to be ready before animating.
-//     window.addEventListener("load", function() {
-//     // Select ALL cards at once
-//     const allCards = "#rating-cards-grid .card-hover, #menu-cards-grid .card-hover";
+// // --- NEW Scroll-Triggered Animation ---
+// window.addEventListener("load", function() {
+    
+//     // Best practice: Register the GSAP plugin
+//     gsap.registerPlugin(ScrollTrigger);
 
-//     // 1. Set the initial state for all cards
-//     gsap.set(allCards, { opacity: 0, y: 40 });
-
-//     // 2. Animate all cards in a single, fast-staggered sequence
-//     gsap.to(allCards, {
+//     // We no longer use gsap.set(). Cards are visible by default.
+    
+//     // Find every card and apply a scroll animation to EACH ONE individually
+//     gsap.utils.toArray(".card-hover").forEach(card => {
+//       gsap.from(card, { // Use .from() to animate FROM a state
+//         opacity: 0,
+//         y: 30,
 //         duration: 0.7,
-//         opacity: 1,
-//         y: 0,
-//         // A shorter stagger makes the cascade effect quicker and smoother
-//         stagger: 0.1, 
 //         ease: "power3.out",
-//         // A very small delay just to let the page settle before animating
-//         delay: 0.1 
+//         scrollTrigger: {
+//           trigger: card,                // Each card is its own trigger
+//           start: "top 90%",             // Start animation when the card is 90% down the screen
+//           toggleActions: "play none none none" // Play it once and that's it
+//         }
+//       });
 //     });
-
-
-// });
+//   });
 </script>
 
 

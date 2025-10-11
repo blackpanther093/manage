@@ -186,11 +186,11 @@ def feedback():
                 return redirect(url_for('main.home'))
                     
         if mess == 'mess1':
-            non_veg_menu1 = get_non_veg_menu('mess1')
+            non_veg_menu1, _, _ = get_non_veg_menu('mess1')
             non_veg_menu2 = []
         else:
             non_veg_menu1 = []
-            non_veg_menu2 = get_non_veg_menu('mess2')
+            non_veg_menu2, _, _ = get_non_veg_menu('mess2')
         
         # Get menu items
         _, veg_menu_items, _ = get_menu()

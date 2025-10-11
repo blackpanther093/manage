@@ -9,6 +9,8 @@ from app.utils.cache import cache_manager
 from datetime import timedelta
 
 MEAL_ORDER = ["Breakfast", "Lunch", "Snacks", "Dinner"]
+flag1 = 0
+flag2 = 0
 
 class MenuService:
     """Service class for menu operations"""
@@ -120,16 +122,20 @@ class MenuService:
         """Get non-veg menu with caching"""
         date = date or TimeUtils.get_fixed_time().date()
         meal = meal or TimeUtils.get_current_meal()
-        
+        week_type = 'Odd' if TimeUtils.is_odd_week(date) else 'Even'
+        day = date.strftime('%A')
+        global flag1
+        global flag2
+
         if not meal:
-            return []
+            return [],0,0
 
         cache_key = f"non_veg_{mess_name}_{date}_{meal}"
         
         # Try cache first
         cached_data = cache_manager.non_veg_cache.get(cache_key, cache_manager.MENU_TTL)
         if cached_data is not None:
-            return cached_data
+            return cached_data, flag1, flag2
         
         # Fetch from database
         try:
@@ -144,14 +150,33 @@ class MenuService:
                     GROUP BY food_item
                 """, (date, meal, mess_name))
                 data = cursor.fetchall()
+                if data:
+                    if mess_name == 'mess1':
+                        flag1 = 0
+                    else:
+                        flag2 = 0
+                elif not data:
+                    if mess_name == 'mess1':
+                        flag1 = 1
+                    else:
+                        flag2 = 1
+                    cursor.execute("""
+                        SELECT distinct food_item, MIN(cost)
+                        FROM permanent_non_veg_menu_items
+                        JOIN permanent_non_veg_menu_main 
+                        ON permanent_non_veg_menu_items.menu_id = permanent_non_veg_menu_main.mess_id
+                        WHERE week_type = %s AND day = %s AND meal = %s AND mess = %s
+                        GROUP BY food_item
+                        """, (week_type, day, meal, mess_name))
+                    data = cursor.fetchall()
                 
                 cache_manager.non_veg_cache.set(cache_key, data)
-                return data
+                return data, flag1, flag2
                 
         except Exception as e:
             logging.error(f"Error fetching non-veg menu for {mess_name}: {e}")
             cache_manager.non_veg_cache.set(cache_key, [])
-            return []
+            return [], 0, 0
     
     @classmethod
     def clear_menu_cache(cls):

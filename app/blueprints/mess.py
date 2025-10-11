@@ -69,7 +69,7 @@ def add_non_veg_menu():
             return redirect(url_for('mess.add_non_veg_menu'))
         
         # created_at = get_fixed_time().date()
-        existing_items = get_non_veg_menu(mess, created_at, meal)
+        existing_items, _, _ = get_non_veg_menu(mess, created_at, meal)
         print(f"Existing items for {mess} on {created_at} ({meal}): {existing_items}")
         try:
             with DatabaseManager.get_db_cursor(dictionary=True) as (cursor, connection):
@@ -115,8 +115,11 @@ def add_non_veg_menu():
         return redirect(url_for('mess.add_non_veg_menu'))
     
     # Load previous items
-    previous_items = get_non_veg_menu(mess, created_at, meal)
-    print(f"Previous items for {mess} on {created_at} ({meal}): {previous_items}")
+    previous_items, flag1, flag2 = get_non_veg_menu(mess, created_at, meal)
+    if((mess == 'mess1' and flag1 == 0) or (mess == 'mess2' and flag2 == 0)):
+        print(f"Previous items for {mess} on {created_at} ({meal}): {previous_items}")
+    else:
+        previous_items = []
     
     return render_template('mess/add_non_veg_menu.html', 
                          meal=meal, 
@@ -169,8 +172,8 @@ def waste_feedback():
     mess = session.get('mess')
     current_hour = get_fixed_time().hour
     meal, veg_menu_items, _ = get_menu()
-    non_veg_menu1 = get_non_veg_menu("mess1")
-    non_veg_menu2 = get_non_veg_menu("mess2")
+    non_veg_menu1, _, _ = get_non_veg_menu("mess1")
+    non_veg_menu2, _, _ = get_non_veg_menu("mess2")
 
     if ((meal == 'Breakfast' and current_hour < 9) or 
         (meal == 'Lunch' and current_hour < 14) or 
@@ -313,7 +316,7 @@ def add_payment():
         return redirect(url_for('mess.add_payment'))
     
     # Get available food items
-    food_items = get_non_veg_menu(mess_name)
+    food_items, _, _ = get_non_veg_menu(mess_name)
     
     return render_template('mess/add_payment.html', 
                          food_items=food_items, 

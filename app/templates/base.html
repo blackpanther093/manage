@@ -61,6 +61,8 @@
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
             overflow-x: hidden;
+            opacity: 0;
+            animation: fadeIn 0.3s ease-in 0.1s forwards;
         }
         
         h1 {
@@ -132,6 +134,12 @@
                 transform: translateY(-20px);
             }
         }
+        @keyframes fadeIn {
+            to {
+                opacity: 1; /* Fade to fully visible */
+            }
+        }
+
         
         .progress-bar {
             background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
