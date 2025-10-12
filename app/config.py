@@ -33,8 +33,9 @@ class Config:
     DB_PORT = int(os.getenv('DB_PORT', '3306'))
     
     # SSL Configuration
-    DB_SSL_DISABLED = os.getenv('DB_SSL_DISABLED', 'false').lower() == 'true'
-    DB_SSL_VERIFY_CERT = os.getenv('DB_SSL_VERIFY_CERT', 'true').lower() == 'true'
+    # DB_SSL_DISABLED = os.getenv('DB_SSL_DISABLED', 'false').lower() == 'true'
+    # DB_SSL_VERIFY_CERT = os.getenv('DB_SSL_VERIFY_CERT', 'true').lower() == 'true'
+    DB_SSL_CA_PATH = os.getenv('DB_SSL_CA_PATH', None)
     
     if not all([DB_USER, DB_PASSWORD, DB_NAME]):
         raise ValueError("Database configuration incomplete")

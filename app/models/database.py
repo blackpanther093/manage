@@ -8,6 +8,7 @@ import logging
 from contextlib import contextmanager
 from app.utils.logging_config import log_security_event
 import time
+import os
 
 # Configure logging
 logger = logging.getLogger('database')
@@ -34,16 +35,25 @@ def init_db_pool():
                 "collation": 'utf8mb4_unicode_ci',
                 "time_zone": '+05:30',  # IST timezone
                 "sql_mode": 'STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO',
-                "ssl_disabled": True  # <--- disable SSL for local/dev
-
             }
             
-            # Add SSL configuration if not disabled
-            # if not current_app.config.get('DB_SSL_DISABLED', False):
-            #     pool_config.update({
-            #         "ssl_disabled": False,
-            #         "ssl_verify_cert": current_app.config.get('DB_SSL_VERIFY_CERT', True),
-            #     })
+            ssl_ca_path = current_app.config.get('DB_SSL_CA_PATH')
+            if ssl_ca_path and os.path.exists(ssl_ca_path):
+                
+                # If the file is found, configure and enable SSL for production (Aiven).
+                logger.info("Aiven SSL is ENABLED. CA certificate found.")
+                print("Aiven SSL is ENABLED. CA certificate found.")
+                pool_config.update({
+                    "ssl_ca": ssl_ca_path,
+                    "ssl_verify_cert": True,
+                    "ssl_disabled": False
+                })
+            else:
+                # If the file is not found, disable SSL for local development.
+                logger.warning("Aiven SSL is DISABLED. 'DB_SSL_CA_PATH' not set or file not found. For local dev only.")
+                print("Aiven SSL is DISABLED. 'DB_SSL_CA_PATH' not set or file not found. For local dev only.")
+                pool_config["ssl_disabled"] = True
+            # --- END: CORRECTED SSL CONFIGURATION FOR AIVEN ---
             
             _connection_pool = pooling.MySQLConnectionPool(**pool_config)
             logger.info(" MySQL connection pool initialized with enhanced security")
