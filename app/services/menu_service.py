@@ -71,7 +71,7 @@ class MenuService:
                     if m == meal:
                         # Current meal → check temporary menu
                         cursor.execute("""
-                            SELECT DISTINCT food_item FROM menu WHERE
+                            SELECT DISTINCT food_item FROM temporary_menu WHERE
                                 week_type = %s AND day = %s AND meal = %s
                                 GROUP BY food_item
                                 ORDER BY
