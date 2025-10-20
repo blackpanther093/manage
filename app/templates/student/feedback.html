@@ -3,6 +3,17 @@
 {% block title %}Submit Feedback - ManageIt{% endblock %}
 
 {% block content %}
+<style>
+    /* Minimal styles for star interaction */
+    .star {
+        cursor: pointer;
+        transition: transform 0.15s ease-in-out, color 0.15s ease-in-out;
+    }
+    .star:hover {
+        transform: scale(1.15);
+    }
+</style>
+
 <div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
@@ -50,18 +61,20 @@
                         <div class="grid md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Rating *</label>
-                                <select name="rating_{{ item }}" required
-                                        class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200">
-                                    <option value="" disabled selected>Select Rating</option>
+                                <!-- Star Rating Component -->
+                                <div class="flex items-center space-x-1 star-rating-container">
+                                    <input type="hidden" name="rating_{{ item }}" class="rating-value" value="" required>
                                     {% for i in range(1, 6) %}
-                                    <option value="{{ i }}">{{ i }} Star{{ 's' if i > 1 else '' }}</option>
+                                    <span class="star" data-value="{{ i }}">
+                                        <svg class="w-8 h-8 text-gray-300 dark:text-gray-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                                    </span>
                                     {% endfor %}
-                                </select>
+                                </div>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Comments (Optional)</label>
                                 <textarea name="comment_{{ item }}" rows="2"
-                                          class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 resize-none"
+                                          class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-green-500 transition-all duration-200 resize-none"
                                           placeholder="Share your thoughts..."></textarea>
                             </div>
                         </div>
@@ -89,18 +102,20 @@
                         <div class="grid md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Rating</label>
-                                <select name="rating_{{ item[0] if item is iterable and item|length > 1 else item }}"
-                                        class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200">
-                                    <option value="" disabled selected>Select Rating</option>
+                                <!-- Star Rating Component -->
+                                 <div class="flex items-center space-x-1 star-rating-container">
+                                    <input type="hidden" name="rating_{{ item[0] if item is iterable and item|length > 1 else item }}" class="rating-value" value="">
                                     {% for i in range(1, 6) %}
-                                    <option value="{{ i }}">{{ i }} Star{{ 's' if i > 1 else '' }}</option>
+                                    <span class="star" data-value="{{ i }}">
+                                        <svg class="w-8 h-8 text-gray-300 dark:text-gray-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8-2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                                    </span>
                                     {% endfor %}
-                                </select>
+                                </div>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Comments (Optional)</label>
                                 <textarea name="comment_{{ item[0] if item is iterable and item|length > 1 else item }}" rows="2"
-                                          class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200 resize-none"
+                                          class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-orange-500 transition-all duration-200 resize-none"
                                           placeholder="Share your thoughts..."></textarea>
                             </div>
                         </div>
@@ -120,4 +135,57 @@
         </form>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Select all star rating containers on the page
+    const ratingContainers = document.querySelectorAll('.star-rating-container');
+
+    // Define the golden yellow color
+    const goldenColor = '#fbbf24'; // This is Tailwind's amber-400
+
+    ratingContainers.forEach(container => {
+        const stars = container.querySelectorAll('.star');
+        const ratingInput = container.querySelector('.rating-value');
+
+        // Function to update the visual appearance of stars based on a rating
+        const setStarsState = (rating) => {
+            stars.forEach(star => {
+                const starValue = parseInt(star.dataset.value, 10);
+                const svg = star.querySelector('svg');
+                
+                // If the star's value is less than or equal to the rating, color it golden yellow
+                if (starValue <= rating) {
+                    svg.style.color = goldenColor;
+                } else { // Otherwise, reset it to its default color
+                    svg.style.color = '';
+                }
+            });
+        };
+
+        // Add event listeners for each star
+        stars.forEach(star => {
+            // When a star is clicked, set the rating permanently
+            star.addEventListener('click', () => {
+                const value = parseInt(star.dataset.value, 10);
+                ratingInput.value = value; // Update the hidden input for form submission
+                setStarsState(value);     // Update the visual state
+            });
+
+            // When hovering over a star, show a preview of the rating
+            star.addEventListener('mouseover', () => {
+                const hoverValue = parseInt(star.dataset.value, 10);
+                setStarsState(hoverValue);
+            });
+        });
+
+        // When the mouse leaves the container, revert to the clicked rating
+        container.addEventListener('mouseleave', () => {
+            const selectedValue = parseInt(ratingInput.value, 10) || 0;
+            setStarsState(selectedValue);
+        });
+    });
+});
+</script>
 {% endblock %}
+

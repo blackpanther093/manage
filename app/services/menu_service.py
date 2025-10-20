@@ -71,26 +71,62 @@ class MenuService:
                     if m == meal:
                         # Current meal → check temporary menu
                         cursor.execute("""
-                            SELECT DISTINCT food_item FROM temporary_menu
-                            WHERE week_type = %s AND day = %s AND meal = %s
-                        """, (week_type, day, m))
+                            SELECT DISTINCT food_item FROM menu WHERE
+                                week_type = %s AND day = %s AND meal = %s
+                                GROUP BY food_item
+                                ORDER BY
+                                    CASE
+                                        WHEN MIN(menu_id) = (
+                                            SELECT MIN(menu_id)
+                                            FROM menu
+                                            WHERE week_type = %s AND day = %s AND meal = %s
+                                        )
+                                        THEN 0 -- Assign the first item a priority of 0
+                                        ELSE 1 -- Assign all other items a priority of 1
+                                    END, -- This sorts priority 0 before priority 1
+                                    LENGTH(food_item) DESC;
+                        """, (week_type, day, m, week_type, day, m))
                         temp_menu = cursor.fetchall()
                         veg_items = [item[0] for item in temp_menu] if temp_menu else []
 
                         # Fallback to permanent menu if temp empty
                         if not veg_items:
                             cursor.execute("""
-                                SELECT DISTINCT food_item FROM menu
-                                WHERE week_type = %s AND day = %s AND meal = %s
-                            """, (week_type, day, m))
+                                SELECT DISTINCT food_item FROM menu WHERE
+                                week_type = %s AND day = %s AND meal = %s
+                                GROUP BY food_item
+                                ORDER BY
+                                    CASE
+                                        WHEN MIN(menu_id) = (
+                                            SELECT MIN(menu_id)
+                                            FROM menu
+                                            WHERE week_type = %s AND day = %s AND meal = %s
+                                        )
+                                        THEN 0 -- Assign the first item a priority of 0
+                                        ELSE 1 -- Assign all other items a priority of 1
+                                    END, -- This sorts priority 0 before priority 1
+                                    LENGTH(food_item) DESC;
+                        """, (week_type, day, m, week_type, day, m))
                             veg_items = [item[0] for item in cursor.fetchall()]
 
                     else:
                         # Non-current meals → always use permanent menu
                         cursor.execute("""
-                            SELECT DISTINCT food_item FROM menu
-                            WHERE week_type = %s AND day = %s AND meal = %s
-                        """, (week_type, day, m))
+                            SELECT DISTINCT food_item FROM menu WHERE
+                            week_type = %s AND day = %s AND meal = %s
+                            GROUP BY food_item
+                            ORDER BY
+                                CASE
+                                    WHEN MIN(menu_id) = (
+                                        SELECT MIN(menu_id)
+                                        FROM menu
+                                        WHERE week_type = %s AND day = %s AND meal = %s
+                                    )
+                                    THEN 0 -- Assign the first item a priority of 0
+                                    ELSE 1 -- Assign all other items a priority of 1
+                                END, -- This sorts priority 0 before priority 1
+                                LENGTH(food_item) DESC;
+                        """, (week_type, day, m, week_type, day, m))
                         veg_items = [item[0] for item in cursor.fetchall()]
 
                     menus[m] = veg_items
