@@ -93,3 +93,8 @@ def public_notifications():
     return render_template("notifications.html", 
                          notifications=notifications, 
                          back_url='/home')
+
+@main_bp.route('/zero-threat.html')
+def zero_threat():
+    return render_template('zero-threat.html')
+
